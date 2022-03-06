@@ -4,7 +4,6 @@ import static gitlet.Utils.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
@@ -90,12 +89,16 @@ public class Commit extends FileTracker {
         writeContents(branchFile, getCommitSha1());
     }
 
-    public Commit getFromSha1(String sha1) {
+    public static Commit getFromSha1(String sha1) {
         File commit = join(Repository.COMMITS, sha1);
+        if (!commit.exists()) {
+            System.out.print("Commit file does not exist.");
+            System.exit(0);
+        }
         return readObject(commit, Commit.class);
     }
 
-    public Commit getCurCommit() {
+    public static Commit getCurCommit() {
         String sha1 = readContentsAsString(Repository.HEAD);
         return getFromSha1(sha1);
     }

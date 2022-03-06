@@ -1,10 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.StreamSupport;
 
 import static gitlet.Utils.*;
 
@@ -73,33 +69,30 @@ public class Repository {
         commit.commit("master");
     }
 
-    public static void add(String[] args) {
-        String[] files = new String[args.length - 1];
-        System.arraycopy(args, 1, files, 0, files.length);
-        for (String file : files) {
-            addToStage(file);
-        }
-    }
-
     /**
      * Call the addToStage(String fileName) add a file to the STAGE directory
+     * 1. read the previous FileTracker object
+     * 2. update the object
+     * 2.1 if the content is different, update the content
+     * 2.2 If the current working version of the file is identical to the version in the current commit,
+     * delete it from the staging area.
+     * 3. write back to ADDITION
      */
     //TODO:: traverse the current commit object
-    private static void addToStage(String fileName) {
-        File file = join(CWD, fileName);
-        if (!file.exists()) {
+    public static void add(String fileName) {
+        File fileToAdd = join(CWD, fileName);
+        if (!fileToAdd.exists()) {
             System.out.print("File does not exist.");
             System.exit(0);
         }
         FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
-        updateTrackedFiles(file, fileTracker.getTrackedFiles());
+        fileTracker.updateTrackedFiles(fileToAdd);
         writeObject(ADDITION, fileTracker);
 
-        /* for debug
-        FileEntry newEntry = readObject(ADDITION, FileEntry.class);
-        System.out.println("----------");
-        System.out.println(newEntry.getFiles());
-         */
+        FileTracker tracker = readObject(ADDITION, FileTracker.class);
+        System.out.println("----------------------");
+        System.out.println(tracker.getTrackedFiles());
+
     }
 
     /**
@@ -135,28 +128,6 @@ public class Repository {
         createFile(REMOVAL, false);
         writeObject(ADDITION, new FileTracker());
         writeObject(REMOVAL, new FileTracker());
-    }
-
-    /**
-     * update the Map<String, String>
-     */
-    private static void updateTrackedFiles(File fileToAdd, Map<String, String> files) {
-        byte[] content = readContents(fileToAdd);
-        String sha1Code = sha1(content);
-
-        files.put(fileToAdd.getName(), sha1Code);
-    }
-
-    /**
-     * get file according to the sha1Code and
-     */
-    private static Commit getCommit(String sha1code) {
-        File commit = join(COMMITS, sha1code);
-        if (!commit.exists()) {
-            System.out.print("Commit file does not exist.");
-            System.exit(0);
-        }
-        return readObject(commit, Commit.class);
     }
 
     public static boolean isInGit() {

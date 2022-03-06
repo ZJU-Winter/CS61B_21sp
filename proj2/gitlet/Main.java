@@ -20,12 +20,22 @@ public class Main {
                 Repository.init();
                 break;
             case "add":
-                //TODO: Not in an initialized Gitlet directory.
-                //TODO: Incorrect operands.
-                Repository.add(args);
+                checkArguments(args, 2);
+                Repository.add(args[1]);
                 break;
             default:
                 System.out.print("No command with that name exists.");
+        }
+    }
+
+    private static void checkArguments(String[] args, int required) {
+        if (args.length != required) {
+            System.out.print("Incorrect operands.");
+            System.exit(0);
+        }
+        if (!Repository.isInGit()) {
+            System.out.print("Not in an initialized Gitlet directory.");
+            System.exit(0);
         }
     }
 }
