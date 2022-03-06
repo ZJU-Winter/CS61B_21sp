@@ -120,12 +120,8 @@ public class Repository {
     private static void createFile(File file, boolean isDir) {
         if (isDir) {
             file.mkdir();
-        } else if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (Exception exception) {
-                throw new GitletException("Failed to creat " + file.getName());
-            }
+        } else {
+            createNewFile(file);
         }
     }
 
@@ -133,7 +129,7 @@ public class Repository {
      * to set up all needed files and directories for gitlet
      */
     private static void setupPersistence() {
-        if (isInGit()) {
+        if (inGit()) {
             System.out.print("A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
         }
@@ -149,7 +145,7 @@ public class Repository {
         writeObject(REMOVAL, new FileTracker());
     }
 
-    public static boolean isInGit() {
+    public static boolean inGit() {
         if (GITLET_DIR.exists())
             return true;
         return false;

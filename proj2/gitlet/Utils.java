@@ -230,10 +230,23 @@ class Utils {
         return new GitletException(String.format(msg, args));
     }
 
-    /** Print a message composed from MSG and ARGS as for the String.format
-     *  method, followed by a newline. */
+    /**
+     * Print a message composed from MSG and ARGS as for the String.format
+     * method, followed by a newline.
+     */
     static void message(String msg, Object... args) {
         System.out.printf(msg, args);
         System.out.println();
+    }
+
+    static void createNewFile(File file) {
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        }
+
     }
 }

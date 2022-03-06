@@ -8,11 +8,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-/**
- * Represents a gitlet commit object.
- *
- * @author winter
- */
 public class Commit extends FileTracker {
 
     private String message;
@@ -84,13 +79,9 @@ public class Commit extends FileTracker {
 
     public void initCommit() {
         String sha1 = getSha1();
-        File commitFile = join(Repository.COMMITS, sha1);
-        try {
-            commitFile.createNewFile();
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
-        writeObject(commitFile, this);
+        File commit = join(Repository.COMMITS, sha1);
+        createNewFile(commit);
+        writeObject(commit, this);
         setupHead();
         setupBranch("master");
 
@@ -112,13 +103,7 @@ public class Commit extends FileTracker {
 
     private void setupBranch(String branchName) {
         File branchFile = join(Repository.BRANCH, branchName);
-        if (!branchFile.exists()) {
-            try {
-                branchFile.createNewFile();
-            } catch (IOException exception) {
-                exception.printStackTrace();
-            }
-        }
+        createNewFile(branchFile);
         writeContents(branchFile, getSha1());
         writeContents(Repository.CURRENT, branchName);
     }
@@ -143,6 +128,7 @@ public class Commit extends FileTracker {
         writeObject(Repository.ADDITION, new FileTracker());
         //update tracked files
         Map<String, String> files = addStage.getTrackedFiles();
+
         if (files.size() == 0) {
             System.out.print("No changes added to the commit.");
             System.exit(0);
@@ -150,11 +136,7 @@ public class Commit extends FileTracker {
         for (Map.Entry<String, String> file : files.entrySet()) {
             File blob = join(Repository.BLOBS, file.getValue());
             File workFile = join(Repository.CWD, file.getKey());
-            try {
-                blob.createNewFile();
-            } catch (IOException exception) {
-                exception.printStackTrace();
-            }
+            createNewFile(blob);
             byte[] content = readContents(workFile);
             writeContents(blob, content);
             trackedFiles.put(file.getKey(), file.getValue());

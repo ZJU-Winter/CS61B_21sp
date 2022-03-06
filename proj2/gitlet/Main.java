@@ -1,8 +1,5 @@
 package gitlet;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
@@ -42,7 +39,7 @@ public class Main {
                 System.exit(0);
             }
         }
-        if (!Repository.isInGit()) {
+        if (!Repository.inGit()) {
             System.out.print("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
