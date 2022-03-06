@@ -24,6 +24,18 @@ public class Main {
                 checkArguments(args, 2);
                 Repository.commit(args[1]);
                 break;
+            case "rm":
+                checkArguments(args, 2);
+                Repository.rm(args[1]);
+                break;
+            case "log":
+                checkArguments(args, 1);
+                Repository.log();
+                break;
+            case "global-log":
+                checkArguments(args, 1);
+                Repository.globalLog();
+                break;
             default:
                 System.out.print("No command with that name exists.");
         }

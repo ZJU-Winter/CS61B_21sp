@@ -10,10 +10,10 @@ import java.util.Map;
 
 public class Commit extends FileTracker {
 
-    private String message;
-    private String time;
-    private String parent;
-    private String author = "Winter";
+    private final String message;
+    private final String time;
+    private final String parent;
+    private final String author = "Winter";
 
     Commit(String message, String parent, Map<String, String> trackedFiles) {
         super(trackedFiles);
@@ -49,6 +49,10 @@ public class Commit extends FileTracker {
         return this.parent;
     }
 
+    public String getSha1() {
+        return sha1(this.toString());
+    }
+
     @Override
     public String toString() {
         String info = String.format("Message: %s Time: %s Author: %s\nParentSha1: %s \n" +
@@ -69,12 +73,11 @@ public class Commit extends FileTracker {
         setupHead();
         setupBranch(getBranch());
 
-        /*
+
         System.out.println("-------------");
         System.out.print(this);
         System.out.print("\nMySha1: " + getSha1());
 
-         */
     }
 
     public void initCommit() {
@@ -85,17 +88,13 @@ public class Commit extends FileTracker {
         setupHead();
         setupBranch("master");
 
-        /*
+
         System.out.println("-------------");
         System.out.print(this);
         System.out.print("\nMySha1: " + getSha1());
 
-         */
     }
 
-    public String getSha1() {
-        return sha1(this.toString());
-    }
 
     private void setupHead() {
         writeContents(Repository.HEAD, getSha1());
@@ -108,7 +107,10 @@ public class Commit extends FileTracker {
         writeContents(Repository.CURRENT, branchName);
     }
 
-    public static Commit getFromSha1(String sha1) {
+    public static Commit getCommit(String sha1) {
+        if (sha1 == null) {
+            return null;
+        }
         File commit = join(Repository.COMMITS, sha1);
         if (!commit.exists()) {
             System.out.print("Commit file does not exist.");
@@ -119,9 +121,12 @@ public class Commit extends FileTracker {
 
     public static Commit getCurCommit() {
         String sha1 = readContentsAsString(Repository.HEAD);
-        return getFromSha1(sha1);
+        return getCommit(sha1);
     }
 
+    /**
+     * update tracked files according to addition stage
+     */
     public void updateTrackFiles() {
         FileTracker addStage = readObject(Repository.ADDITION, FileTracker.class);
         //clear the adding stage
@@ -146,6 +151,13 @@ public class Commit extends FileTracker {
     public String getBranch() {
         String branch = readContentsAsString(Repository.CURRENT);
         return branch;
+    }
+
+    public void printCommit() {
+        System.out.println("===");
+        System.out.println("commit " + this.getSha1());
+        System.out.println("Date: " + this.getTime());
+        System.out.println(this.getMessage());
     }
 
 }

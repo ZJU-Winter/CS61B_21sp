@@ -247,6 +247,17 @@ class Utils {
                 exception.printStackTrace();
             }
         }
+    }
 
+    static String fileSha1(File file) {
+        byte[] content = readContents(file);
+        return sha1(content);
+    }
+
+    static void writeBlob(File file) {
+        File blob = join(Repository.BLOBS, fileSha1(file));
+        createNewFile(blob);
+        byte[] content = readContents(file);
+        writeContents(blob, content);
     }
 }

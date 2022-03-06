@@ -1,6 +1,8 @@
 package gitlet;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 import static gitlet.Utils.*;
 
@@ -90,15 +92,10 @@ public class Repository {
             System.exit(0);
         }
         FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
-        fileTracker.updateTrackedFiles(fileToAdd);
+        fileTracker.add(fileToAdd);
         writeObject(ADDITION, fileTracker);
 
-/*
-        FileTracker tracker = readObject(ADDITION, FileTracker.class);
-        System.out.println("----------------------");
-        System.out.println(tracker.getTrackedFiles());
- */
-
+        printAddStage();
     }
 
     /**
@@ -115,6 +112,62 @@ public class Repository {
     }
 
     /**
+     * Call the rm(filename) to rm
+     * 1.if the file is staged, unstage it
+     * 2.if the file is tracked in the current commit
+     * 2.1 stage it for removal
+     * 2.2 remove it from the working directory
+     */
+    public static void rm(String filename) {
+        File file = join(CWD, filename);
+        FileTracker addStage = readObject(ADDITION, FileTracker.class);
+        FileTracker removeStage = readObject(REMOVAL, FileTracker.class);
+        Commit commit = Commit.getCurCommit();
+
+        if (addStage.containsFile(file)) {
+            addStage.remove(file);
+            writeObject(ADDITION, addStage);
+        } else if (commit.containsFile(file)) {
+            removeStage.put(file);
+            writeObject(REMOVAL, removeStage);
+            writeBlob(file);
+            restrictedDelete(file);
+        } else {
+            System.out.print("No reason to remove the file.");
+            System.exit(0);
+        }
+
+        printAddStage();
+        printRemoveStage();
+    }
+
+    /**
+     * Call the log() to print each commit starting from the HEAD commit
+     */
+    //TODO: merge!!
+    public static void log() {
+        Commit commit = Commit.getCurCommit();
+        while (commit != null) {
+            commit.printCommit();
+            commit = Commit.getCommit(commit.getParent());
+        }
+    }
+
+    /**
+     * Call the globalLog() to print all commits in the history
+     */
+    //TODO:merge!!
+    public static void globalLog() {
+        List<String> commits = plainFilenamesIn(COMMITS);
+        if (commits != null) {
+            for (String sha1 : commits) {
+                Commit commit = Commit.getCommit(sha1);
+                commit.printCommit();
+            }
+        }
+    }
+
+    /**
      * to create file or a directory
      */
     private static void createFile(File file, boolean isDir) {
@@ -124,6 +177,7 @@ public class Repository {
             createNewFile(file);
         }
     }
+
 
     /**
      * to set up all needed files and directories for gitlet
@@ -149,6 +203,18 @@ public class Repository {
         if (GITLET_DIR.exists())
             return true;
         return false;
+    }
+
+    private static void printAddStage() {
+        FileTracker tracker = readObject(ADDITION, FileTracker.class);
+        System.out.println("----------------------");
+        System.out.println(tracker.getTrackedFiles());
+    }
+
+    private static void printRemoveStage() {
+        FileTracker tracker = readObject(REMOVAL, FileTracker.class);
+        System.out.println("----------------------");
+        System.out.println(tracker.getTrackedFiles());
     }
 
 }

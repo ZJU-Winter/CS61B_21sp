@@ -22,10 +22,12 @@ public class FileTracker implements Serializable {
         return trackedFiles;
     }
 
-    public void updateTrackedFiles(File fileToAdd) {
-        byte[] content = readContents(fileToAdd);
-        String version = sha1(content);
-        String fileName = fileToAdd.getName();
+    /**
+     * add file for "add"
+     */
+    public void add(File file) {
+        String fileName = file.getName();
+        String version = fileSha1(file);
 
         Commit cur = Commit.getCurCommit();
         Map<String, String> curTrackedFiles = cur.getTrackedFiles();
@@ -38,5 +40,20 @@ public class FileTracker implements Serializable {
         } else {
             this.trackedFiles.put(fileName, version);
         }
+    }
+
+    public void remove(File file) {
+        this.trackedFiles.remove(file.getName());
+    }
+
+    public void put(File file) {
+        this.trackedFiles.put(file.getName(), fileSha1(file));
+    }
+
+    public boolean containsFile(File file) {
+        String sha1 = fileSha1(file);
+        return this.trackedFiles.containsKey(file.getName())
+                &&
+                sha1.equals(this.trackedFiles.get(file.getName()));
     }
 }
