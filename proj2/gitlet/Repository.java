@@ -47,6 +47,11 @@ public class Repository {
     public static final File BRANCH = join(GITLET_DIR, "branches");
 
     /**
+     * The file for recording the current branch's name
+     */
+    public static final File CURRENT = join(BRANCH, "current");
+
+    /**
      * The file for recording staged files for addition
      */
     public static final File ADDITION = join(STAGINGAREA, "addition");
@@ -66,7 +71,7 @@ public class Repository {
     public static void init() {
         setupPersistence();
         Commit commit = new Commit("initial commit");
-        commit.commit("master");
+        commit.initCommit();
     }
 
     /**
@@ -78,7 +83,6 @@ public class Repository {
      * delete it from the staging area.
      * 3. write back to ADDITION
      */
-    //TODO:: traverse the current commit object
     public static void add(String fileName) {
         File fileToAdd = join(CWD, fileName);
         if (!fileToAdd.exists()) {
@@ -89,10 +93,25 @@ public class Repository {
         fileTracker.updateTrackedFiles(fileToAdd);
         writeObject(ADDITION, fileTracker);
 
+/*
         FileTracker tracker = readObject(ADDITION, FileTracker.class);
         System.out.println("----------------------");
         System.out.println(tracker.getTrackedFiles());
+ */
 
+    }
+
+    /**
+     * Call the commit("message") to commit
+     * 1. copy from the parent commit
+     * 2. put adding stage to tracked files and clear the stage
+     * 3. save the new commit to the directory
+     * 4. setup HEAD and BRANCH
+     */
+    public static void commit(String message) {
+        Commit parent = Commit.getCurCommit();
+        Commit commit = new Commit(parent, message);
+        commit.commit();
     }
 
     /**

@@ -18,6 +18,7 @@ public class Commit extends FileTracker {
     private String message;
     private String time;
     private String parent;
+    private String author = "Winter";
 
     Commit(String message, String parent, Map<String, String> trackedFiles) {
         super(trackedFiles);
@@ -38,7 +39,7 @@ public class Commit extends FileTracker {
         super(commit.trackedFiles);
         this.message = message;
         this.time = new SimpleDateFormat("yyyy/MMM/dd HH:mm:ss").format(new Date());
-        this.parent = commit.parent;
+        this.parent = commit.getSha1();
     }
 
     public String getMessage() {
@@ -55,26 +56,58 @@ public class Commit extends FileTracker {
 
     @Override
     public String toString() {
-        String info = "Message: " + message + "Time: " + time + "Parent: "
-                +
-                parent + "TrackedFiles: " + trackedFiles;
+        String info = String.format("Message: %s Time: %s Author: %s\nParentSha1: %s \n" +
+                "TrackedFiles: %s", message, time, author, parent, trackedFiles);
         return info;
     }
 
-    public void commit(String branchName) {
-        String commitSha1 = getCommitSha1();
-        File commitFile = join(Repository.COMMITS, commitSha1);
+    public void commit() {
+        updateTrackFiles();
+        String sha1 = getSha1();
+        File commitFile = join(Repository.COMMITS, sha1);
+        try {
+            commitFile.createNewFile();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
         writeObject(commitFile, this);
         setupHead();
-        setupBranch(branchName);
+        setupBranch(getBranch());
+
+        /*
+        System.out.println("-------------");
+        System.out.print(this);
+        System.out.print("\nMySha1: " + getSha1());
+
+         */
     }
 
-    public String getCommitSha1() {
+    public void initCommit() {
+        String sha1 = getSha1();
+        File commitFile = join(Repository.COMMITS, sha1);
+        try {
+            commitFile.createNewFile();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+        writeObject(commitFile, this);
+        setupHead();
+        setupBranch("master");
+
+        /*
+        System.out.println("-------------");
+        System.out.print(this);
+        System.out.print("\nMySha1: " + getSha1());
+
+         */
+    }
+
+    public String getSha1() {
         return sha1(this.toString());
     }
 
     private void setupHead() {
-        writeContents(Repository.HEAD, getCommitSha1());
+        writeContents(Repository.HEAD, getSha1());
     }
 
     private void setupBranch(String branchName) {
@@ -86,7 +119,8 @@ public class Commit extends FileTracker {
                 exception.printStackTrace();
             }
         }
-        writeContents(branchFile, getCommitSha1());
+        writeContents(branchFile, getSha1());
+        writeContents(Repository.CURRENT, branchName);
     }
 
     public static Commit getFromSha1(String sha1) {
@@ -103,5 +137,33 @@ public class Commit extends FileTracker {
         return getFromSha1(sha1);
     }
 
-    //public String
+    public void updateTrackFiles() {
+        FileTracker addStage = readObject(Repository.ADDITION, FileTracker.class);
+        //clear the adding stage
+        writeObject(Repository.ADDITION, new FileTracker());
+        //update tracked files
+        Map<String, String> files = addStage.getTrackedFiles();
+        if (files.size() == 0) {
+            System.out.print("No changes added to the commit.");
+            System.exit(0);
+        }
+        for (Map.Entry<String, String> file : files.entrySet()) {
+            File blob = join(Repository.BLOBS, file.getValue());
+            File workFile = join(Repository.CWD, file.getKey());
+            try {
+                blob.createNewFile();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+            byte[] content = readContents(workFile);
+            writeContents(blob, content);
+            trackedFiles.put(file.getKey(), file.getValue());
+        }
+    }
+
+    public String getBranch() {
+        String branch = readContentsAsString(Repository.CURRENT);
+        return branch;
+    }
+
 }

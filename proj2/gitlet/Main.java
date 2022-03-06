@@ -23,6 +23,10 @@ public class Main {
                 checkArguments(args, 2);
                 Repository.add(args[1]);
                 break;
+            case "commit":
+                checkArguments(args, 2);
+                Repository.commit(args[1]);
+                break;
             default:
                 System.out.print("No command with that name exists.");
         }
@@ -30,8 +34,13 @@ public class Main {
 
     private static void checkArguments(String[] args, int required) {
         if (args.length != required) {
-            System.out.print("Incorrect operands.");
-            System.exit(0);
+            if (args[0].equals("commit") && args.length == 1) {
+                System.out.print("Please enter a commit message.");
+                System.exit(0);
+            } else {
+                System.out.print("Incorrect operands.");
+                System.exit(0);
+            }
         }
         if (!Repository.isInGit()) {
             System.out.print("Not in an initialized Gitlet directory.");
