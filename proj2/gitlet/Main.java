@@ -1,24 +1,31 @@
 package gitlet;
 
-/** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * Driver class for Gitlet, a subset of the Git version-control system.
+ *
+ * @author winter
  */
 public class Main {
-
-    /** Usage: java gitlet.Main ARGS, where ARGS contains
-     *  <COMMAND> <OPERAND1> <OPERAND2> ... 
-     */
     public static void main(String[] args) {
-        // TODO: what if args is empty?
+        if (args.length == 0) {
+            System.out.print("Please enter a command.");
+            System.exit(0);
+        }
         String firstArg = args[0];
-        switch(firstArg) {
+        switch (firstArg) {
             case "init":
-                // TODO: handle the `init` command
+                Repository.init();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
+                //TODO: Not in an initialized Gitlet directory.
+                //TODO: Incorrect operands.
+                Repository.add(args);
                 break;
-            // TODO: FILL THE REST IN
+            default:
+                System.out.print("No command with that name exists.");
         }
     }
 }
