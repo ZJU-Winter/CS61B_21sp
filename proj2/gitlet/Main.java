@@ -47,6 +47,14 @@ public class Main {
                 argumentsAtLeast(args, 2);
                 Repository.checkout(args);
                 break;
+            case "branch":
+                checkArguments(args, 2);
+                Repository.branch(args[1]);
+                break;
+            case "rm-branch":
+                checkArguments(args, 2);
+                Repository.removeBranch(args[1]);
+                break;
             default:
                 System.out.print("No command with that name exists.");
         }

@@ -1,6 +1,5 @@
 package gitlet;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.util.*;
 
@@ -213,6 +212,39 @@ public class Repository {
         }
     }
 
+    /**
+     * to create a new branch
+     */
+    public static void branch(String branchName) {
+        File branch = join(BRANCH, branchName);
+        String head = Commit.getCurCommit().getSha1();
+        if (branch.exists()) {
+            System.out.print("A branch with that name already exists.");
+            System.exit(0);
+        }
+        createNewFile(branch);
+        writeContents(branch, head);
+    }
+
+    /**
+     * to remove the branch
+     */
+    public static void removeBranch(String branchName) {
+        List<String> branches = plainFilenamesIn(BRANCH);
+        if (!branches.contains(branchName)) {
+            System.out.print("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String curBranch = readContentsAsString(CURRENT);
+        if (curBranch.equals(branchName)) {
+            System.out.print("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        File branchFile = join(BRANCH, branchName);
+        branchFile.delete();
+    }
+
+
     private static void checkoutCurCommit(String fileName) {
         String commitID = readContentsAsString(HEAD);
         checkoutCommit(commitID, fileName);
@@ -224,19 +256,20 @@ public class Repository {
     private static void checkoutBranch(String branchName) {
         List<String> branches = plainFilenamesIn(BRANCH);
         String curBranch = readContentsAsString(CURRENT);
+        if (!branches.contains(branchName)) {
+            System.out.print("No such branch exists.");
+            System.exit(0);
+        }
+
+        if (curBranch.equals(branchName)) {
+            System.out.print("No need to checkout the current branch.");
+            System.exit(0);
+        }
         File branchFile = join(BRANCH, branchName);
         String commitID = readContentsAsString(branchFile);
         Commit branchHead = Commit.getCommit(commitID);
         Map<String, String> branchTrackedFiles = branchHead.getTrackedFiles();
         Set<String> untrackedFiles = getUntrackedFiles();
-        if (!branches.contains(branchName)) {
-            System.out.print("No such branch exists.");
-            System.exit(0);
-        }
-        if (curBranch.equals(branchName)) {
-            System.out.print("No need to checkout the current branch.");
-            System.exit(0);
-        }
         if (!untrackedFiles.isEmpty()) {
             for (String file : untrackedFiles) {
                 if (branchTrackedFiles.containsKey(file)) {
@@ -272,6 +305,7 @@ public class Repository {
         createNewFile(file);
         writeContents(file, contents);
     }
+
 
     /**
      * to create file or a directory
