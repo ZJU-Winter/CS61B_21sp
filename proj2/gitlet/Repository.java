@@ -10,7 +10,6 @@ import static gitlet.Utils.*;
 /**
  * Represents a gitlet repository.
  * includes all the methods used in gitlet
- *
  * @author winter
  */
 public class Repository {
@@ -164,6 +163,27 @@ public class Repository {
                 Commit commit = Commit.getCommit(sha1);
                 commit.printCommit();
             }
+        }
+    }
+
+    /**
+     * Call the find to print out all the ids of commits that have given commit message
+     */
+    public static void find(String message) {
+        List<String> commits = plainFilenamesIn(COMMITS);
+        boolean found = false;
+        if (commits != null) {
+            for (String sha1 : commits) {
+                Commit commit = Commit.getCommit(sha1);
+                if (commit.getMessage().equals(message)) {
+                    System.out.println(commit.getSha1());
+                    found = true;
+                }
+            }
+        }
+        if (!found) {
+            System.out.print("Found no commit with that message.");
+            System.exit(0);
         }
     }
 

@@ -36,6 +36,10 @@ public class Main {
                 checkArguments(args, 1);
                 Repository.globalLog();
                 break;
+            case "find":
+                checkArguments(args, 2);
+                Repository.find(args[1]);
+                break;
             default:
                 System.out.print("No command with that name exists.");
         }
