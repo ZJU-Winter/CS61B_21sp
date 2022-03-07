@@ -2,8 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -55,5 +54,10 @@ public class FileTracker implements Serializable {
         return this.trackedFiles.containsKey(file.getName())
                 &&
                 sha1.equals(this.trackedFiles.get(file.getName()));
+    }
+
+    public Set<String> getFiles() {
+        Set<String> files = new LinkedHashSet<>(this.trackedFiles.keySet());
+        return files;
     }
 }

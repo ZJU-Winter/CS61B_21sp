@@ -1,8 +1,7 @@
 package gitlet;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -85,14 +84,16 @@ public class Repository {
      * 3. write back to ADDITION
      */
     public static void add(String fileName) {
-        File fileToAdd = join(CWD, fileName);
-        if (!fileToAdd.exists()) {
+        File file = join(CWD, fileName);
+        if (!file.exists()) {
             System.out.print("File does not exist.");
             System.exit(0);
         }
         FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
-        fileTracker.add(fileToAdd);
+        fileTracker.add(file);
         writeObject(ADDITION, fileTracker);
+
+        writeBlob(file);
 
         printAddStage();
     }
@@ -188,6 +189,17 @@ public class Repository {
     }
 
     /**
+     * Call the status to show information
+     */
+    public static void status() {
+        showBranches();
+        showStagedFiles();
+        showRemovedFiles();
+        showModifications();
+        showUntrackedFiles();
+    }
+
+    /**
      * to create file or a directory
      */
     private static void createFile(File file, boolean isDir) {
@@ -225,16 +237,131 @@ public class Repository {
         return false;
     }
 
+    private static void showBranches() {
+        String current = readContentsAsString(CURRENT);
+        List<String> files = plainFilenamesIn(BRANCH);
+        List<String> branches = new LinkedList<>(files);
+        branches.remove("current");
+        branches.remove(current);
+        branches.add(0, "*" + current);
+        System.out.println("=== Branches ===");
+        for (String branch : branches) {
+            System.out.println(branch);
+        }
+        System.out.println();
+    }
+
+    private static void showStagedFiles() {
+        FileTracker staged = readObject(ADDITION, FileTracker.class);
+        Set<String> files = staged.getFiles();
+        System.out.println("=== Staged Files ===");
+        for (String file : files) {
+            System.out.println(file);
+        }
+        System.out.println();
+    }
+
+    private static void showRemovedFiles() {
+        FileTracker staged = readObject(REMOVAL, FileTracker.class);
+        Set<String> files = staged.getFiles();
+        System.out.println("=== Removed Files ===");
+        for (String file : files) {
+            System.out.println(file);
+        }
+        System.out.println();
+    }
+
+    private static void showUntrackedFiles() {
+        Commit commit = Commit.getCurCommit();
+        Set<String> trackedFiles = commit.getFiles();
+        FileTracker staged = readObject(ADDITION, FileTracker.class);
+        Set<String> stagedFiles = staged.getFiles();
+        List<String> files = plainFilenamesIn(CWD);
+        System.out.println("=== Untracked Files ===");
+        for (String file : files) {
+            if (!trackedFiles.contains(file) && !stagedFiles.contains(file)) {
+                System.out.println(file);
+            }
+        }
+        System.out.println();
+    }
+
+    private static void showModifications() {
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        showDeleted();
+        showModified();
+        System.out.println();
+    }
+
+    private static void showModified() {
+        Commit commit = Commit.getCurCommit();
+        Map<String, String> trackedFiles = commit.getTrackedFiles();
+        FileTracker Addition = readObject(ADDITION, FileTracker.class);
+        Map<String, String> stagedFiles = Addition.getTrackedFiles();
+        Set<String> modified = new LinkedHashSet<>();
+        for (String file : trackedFiles.keySet()) {
+            File temp = join(CWD, file);
+            if (temp.exists()) {
+                String content = fileSha1(temp);
+                if (differentContent(trackedFiles, file, content)
+                        &&
+                        differentContent(stagedFiles, file, content)) {
+                    modified.add(file);
+                }
+            }
+        }
+        for (String file : stagedFiles.keySet()) {
+            File temp = join(CWD, file);
+            if (temp.exists()) {
+                String content = fileSha1(CWD, file);
+                if (differentContent(stagedFiles, file, content))
+                    modified.add(file);
+            }
+        }
+
+        for (String file : modified) {
+            System.out.println(file + " (modified)");
+        }
+
+    }
+
+    private static void showDeleted() {
+        Commit commit = Commit.getCurCommit();
+        FileTracker Addition = readObject(ADDITION, FileTracker.class);
+        FileTracker Removal = readObject(REMOVAL, FileTracker.class);
+        List<String> workingDir = plainFilenamesIn(CWD);
+        Set<String> trackedFiles = commit.getFiles();
+        Set<String> stagedFiles = Addition.getFiles();
+        Set<String> removedFiles = Removal.getFiles();
+        Set<String> deleted = new LinkedHashSet<>();
+        for (String file : stagedFiles) {
+            if (!workingDir.contains(file))
+                deleted.add(file);
+        }
+        for (String file : trackedFiles) {
+            if (!removedFiles.contains(file) && !workingDir.contains(file))
+                deleted.add(file);
+        }
+        for (String file : deleted) {
+            System.out.println(file + " (deleted)");
+        }
+
+    }
+
     private static void printAddStage() {
         FileTracker tracker = readObject(ADDITION, FileTracker.class);
-        System.out.println("----------------------");
+        System.out.println("------Addition Stage-------");
         System.out.println(tracker.getTrackedFiles());
     }
 
     private static void printRemoveStage() {
         FileTracker tracker = readObject(REMOVAL, FileTracker.class);
-        System.out.println("----------------------");
+        System.out.println("-------Removed Stage--------");
         System.out.println(tracker.getTrackedFiles());
     }
 
+    private static boolean differentContent(Map<String, String> map, String file, String content) {
+        String expected = map.getOrDefault(file, "");
+        return !expected.equals(content);
+    }
 }

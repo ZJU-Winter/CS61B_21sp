@@ -254,6 +254,11 @@ class Utils {
         return sha1(content);
     }
 
+    static String fileSha1(File folder, String filename) {
+        File file = join(folder, filename);
+        return fileSha1(file);
+    }
+
     static void writeBlob(File file) {
         File blob = join(Repository.BLOBS, fileSha1(file));
         createNewFile(blob);

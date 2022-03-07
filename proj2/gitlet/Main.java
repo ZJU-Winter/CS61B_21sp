@@ -40,6 +40,10 @@ public class Main {
                 checkArguments(args, 2);
                 Repository.find(args[1]);
                 break;
+            case "status":
+                checkArguments(args, 1);
+                Repository.status();
+                break;
             default:
                 System.out.print("No command with that name exists.");
         }

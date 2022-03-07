@@ -138,14 +138,18 @@ public class Commit extends FileTracker {
             System.out.print("No changes added to the commit.");
             System.exit(0);
         }
+        this.trackedFiles.putAll(files);
+        /*
         for (Map.Entry<String, String> file : files.entrySet()) {
             File blob = join(Repository.BLOBS, file.getValue());
             File workFile = join(Repository.CWD, file.getKey());
             createNewFile(blob);
-            byte[] content = readContents(workFile);
-            writeContents(blob, content);
-            trackedFiles.put(file.getKey(), file.getValue());
-        }
+            if (workFile.exists()) {
+                byte[] content = readContents(workFile);
+                writeContents(blob, content);
+                trackedFiles.put(file.getKey(), file.getValue());
+            }
+        }*/
     }
 
     public String getBranch() {
