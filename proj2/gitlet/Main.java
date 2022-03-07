@@ -2,7 +2,6 @@ package gitlet;
 
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
- *
  * @author winter
  */
 public class Main {
@@ -44,6 +43,10 @@ public class Main {
                 checkArguments(args, 1);
                 Repository.status();
                 break;
+            case "checkout":
+                argumentsAtLeast(args, 2);
+                Repository.checkout(args);
+                break;
             default:
                 System.out.print("No command with that name exists.");
         }
@@ -58,6 +61,17 @@ public class Main {
                 System.out.print("Incorrect operands.");
                 System.exit(0);
             }
+        }
+        if (!Repository.inGit()) {
+            System.out.print("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+    }
+
+    private static void argumentsAtLeast(String[] args, int required) {
+        if (args.length < required) {
+            System.out.print("Incorrect operands.");
+            System.exit(0);
         }
         if (!Repository.inGit()) {
             System.out.print("Not in an initialized Gitlet directory.");

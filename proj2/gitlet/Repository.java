@@ -1,5 +1,6 @@
 package gitlet;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.util.*;
 
@@ -49,7 +50,7 @@ public class Repository {
     /**
      * The file for recording the current branch's name
      */
-    public static final File CURRENT = join(BRANCH, "current");
+    public static final File CURRENT = join(GITLET_DIR, "CURRENT");
 
     /**
      * The file for recording staged files for addition
@@ -189,7 +190,7 @@ public class Repository {
     }
 
     /**
-     * Call the status to show information
+     * Call the status() to show information
      */
     public static void status() {
         showBranches();
@@ -200,9 +201,82 @@ public class Repository {
     }
 
     /**
+     * Call the checkout(args) to checkout
+     */
+    public static void checkout(String[] args) {
+        if (args.length == 2) {
+            checkoutBranch(args[1]);
+        } else if (args.length == 3) {
+            checkoutCurCommit(args[2]);
+        } else if (args.length == 4) {
+            checkoutCommit(args[1], args[3]);
+        }
+    }
+
+    private static void checkoutCurCommit(String fileName) {
+        String commitID = readContentsAsString(HEAD);
+        checkoutCommit(commitID, fileName);
+    }
+
+    /**
+     * to update all tracked files to the state of Branch head
+     */
+    private static void checkoutBranch(String branchName) {
+        List<String> branches = plainFilenamesIn(BRANCH);
+        String curBranch = readContentsAsString(CURRENT);
+        File branchFile = join(BRANCH, branchName);
+        String commitID = readContentsAsString(branchFile);
+        Commit branchHead = Commit.getCommit(commitID);
+        Map<String, String> branchTrackedFiles = branchHead.getTrackedFiles();
+        Set<String> untrackedFiles = getUntrackedFiles();
+        if (!branches.contains(branchName)) {
+            System.out.print("No such branch exists.");
+            System.exit(0);
+        }
+        if (curBranch.equals(branchName)) {
+            System.out.print("No need to checkout the current branch.");
+            System.exit(0);
+        }
+        if (!untrackedFiles.isEmpty()) {
+            for (String file : untrackedFiles) {
+                if (branchTrackedFiles.containsKey(file)) {
+                    System.out.print("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+
+        updateCWDTo(branchHead);
+        writeObject(ADDITION, new FileTracker());
+        writeContents(HEAD, commitID);
+        writeContents(CURRENT, branchName);
+    }
+
+    private static void checkoutCommit(String commitID, String filename) {
+        List<String> commits = plainFilenamesIn(COMMITS);
+        if (!commits.contains(commitID)) {
+            System.out.print("No commit with that id exists.");
+            System.exit(0);
+        }
+        Commit commit = Commit.getCommit(commitID);
+        Map<String, String> files = commit.getTrackedFiles();
+        if (!files.containsKey(filename)) {
+            System.out.print("File does not exist in that commit.");
+            System.exit(0);
+        }
+
+        File file = join(CWD, filename);
+        File blob = join(BLOBS, files.get(filename));
+
+        byte[] contents = readContents(blob);
+        createNewFile(file);
+        writeContents(file, contents);
+    }
+
+    /**
      * to create file or a directory
      */
-    private static void createFile(File file, boolean isDir) {
+    private static void setupFile(File file, boolean isDir) {
         if (isDir) {
             file.mkdir();
         } else {
@@ -219,14 +293,14 @@ public class Repository {
             System.out.print("A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
         }
-        createFile(GITLET_DIR, true);
-        createFile(STAGINGAREA, true);
-        createFile(COMMITS, true);
-        createFile(BLOBS, true);
-        createFile(BRANCH, true);
-        createFile(HEAD, false);
-        createFile(ADDITION, false);
-        createFile(REMOVAL, false);
+        setupFile(GITLET_DIR, true);
+        setupFile(STAGINGAREA, true);
+        setupFile(COMMITS, true);
+        setupFile(BLOBS, true);
+        setupFile(BRANCH, true);
+        setupFile(HEAD, false);
+        setupFile(ADDITION, false);
+        setupFile(REMOVAL, false);
         writeObject(ADDITION, new FileTracker());
         writeObject(REMOVAL, new FileTracker());
     }
@@ -241,7 +315,6 @@ public class Repository {
         String current = readContentsAsString(CURRENT);
         List<String> files = plainFilenamesIn(BRANCH);
         List<String> branches = new LinkedList<>(files);
-        branches.remove("current");
         branches.remove(current);
         branches.add(0, "*" + current);
         System.out.println("=== Branches ===");
@@ -272,18 +345,27 @@ public class Repository {
     }
 
     private static void showUntrackedFiles() {
+        Set<String> untrackedFiles = getUntrackedFiles();
+        System.out.println("=== Untracked Files ===");
+        for (String file : untrackedFiles) {
+            System.out.println(file);
+        }
+        System.out.println();
+    }
+
+    private static Set<String> getUntrackedFiles() {
         Commit commit = Commit.getCurCommit();
         Set<String> trackedFiles = commit.getFiles();
         FileTracker staged = readObject(ADDITION, FileTracker.class);
         Set<String> stagedFiles = staged.getFiles();
         List<String> files = plainFilenamesIn(CWD);
-        System.out.println("=== Untracked Files ===");
+        Set<String> untrackedFiles = new LinkedHashSet<>();
         for (String file : files) {
             if (!trackedFiles.contains(file) && !stagedFiles.contains(file)) {
-                System.out.println(file);
+                untrackedFiles.add(file);
             }
         }
-        System.out.println();
+        return untrackedFiles;
     }
 
     private static void showModifications() {
@@ -345,7 +427,27 @@ public class Repository {
         for (String file : deleted) {
             System.out.println(file + " (deleted)");
         }
+    }
 
+    /**
+     * update all files in the CWD to the commit tracked files
+     * 1. not include the untracked files
+     */
+    private static void updateCWDTo(Commit commit) {
+        Commit curCommit = Commit.getCurCommit();
+        Map<String, String> trackedFiles = commit.getTrackedFiles();
+        for (String filename : curCommit.getFiles()) {
+            File file = join(CWD, filename);
+            restrictedDelete(file);
+        }
+
+        for (String filename : trackedFiles.keySet()) {
+            File blob = join(BLOBS, trackedFiles.get(filename));
+            File newFile = join(CWD, filename);
+            createNewFile(newFile);
+            String contents = readContentsAsString(blob);
+            writeContents(newFile, contents);
+        }
     }
 
     private static void printAddStage() {
