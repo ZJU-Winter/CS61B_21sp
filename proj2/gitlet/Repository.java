@@ -94,10 +94,15 @@ public class Repository {
             System.out.print("File does not exist.");
             System.exit(0);
         }
-        FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
-        fileTracker.add(file);
-        writeObject(ADDITION, fileTracker);
+        FileTracker addition = readObject(ADDITION, FileTracker.class);
+        addition.add(file);
+        writeObject(ADDITION, addition);
 
+        FileTracker removal = readObject(REMOVAL, FileTracker.class);
+        if (removal.trackedFiles.getOrDefault(fileName, "").equals(fileSha1(file))) {
+            removal.trackedFiles.remove(fileName);
+            writeObject(REMOVAL, removal);
+        }
         writeBlob(file);
 
         //printAddStage();
@@ -111,8 +116,8 @@ public class Repository {
      * 4. setup HEAD and BRANCH
      */
     public static void commit(String message) {
-        Commit parent = Commit.getCurCommit();
-        Commit commit = new Commit(parent, message);
+        Commit curCommit = Commit.getCurCommit();
+        Commit commit = new Commit(curCommit, message);
         commit.commit();
     }
 
@@ -135,7 +140,6 @@ public class Repository {
         } else if (commit.containsFile(file)) {
             removeStage.put(file);
             writeObject(REMOVAL, removeStage);
-            writeBlob(file);
             restrictedDelete(file);
         } else {
             System.out.print("No reason to remove the file.");

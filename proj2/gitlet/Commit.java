@@ -147,17 +147,23 @@ public class Commit extends FileTracker {
      * update tracked files according to addition stage
      */
     public void updateTrackFiles() {
-        FileTracker addStage = readObject(Repository.ADDITION, FileTracker.class);
+        FileTracker addition = readObject(Repository.ADDITION, FileTracker.class);
+        FileTracker removal = readObject(Repository.REMOVAL, FileTracker.class);
         //clear the adding stage
         writeObject(Repository.ADDITION, new FileTracker());
+        writeObject(Repository.REMOVAL, new FileTracker());
         //update tracked files
-        Map<String, String> files = addStage.trackedFiles;
+        Map<String, String> toAdd = addition.trackedFiles;
+        Map<String, String> toRemove = removal.trackedFiles;
 
-        if (files.size() == 0) {
+        if (toAdd.size() == 0 && toRemove.size() == 0) {
             System.out.print("No changes added to the commit.");
             System.exit(0);
         }
-        this.trackedFiles.putAll(files);
+        this.trackedFiles.putAll(toAdd);
+        for (String fileToRemove : toRemove.keySet()) {
+            this.trackedFiles.remove(fileToRemove);
+        }
     }
 
     public static String curBranch() {
