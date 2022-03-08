@@ -70,7 +70,7 @@ public class Main {
 
     private static void checkArguments(String[] args, int required) {
         if (args.length != required) {
-            if (args[0].equals("commit") && args.length == 1) {
+            if (args[0].equals("commit") && (args.length == 1) || args[1].equals("")) {
                 System.out.print("Please enter a commit message.");
                 System.exit(0);
             } else {
