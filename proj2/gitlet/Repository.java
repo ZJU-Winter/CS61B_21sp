@@ -116,6 +116,10 @@ public class Repository {
      * 4. setup HEAD and BRANCH
      */
     public static void commit(String message) {
+        if (message.equals("")) {
+            System.out.print("Please enter a commit message.");
+            System.exit(0);
+        }
         Commit curCommit = Commit.getCurCommit();
         Commit commit = new Commit(curCommit, message);
         commit.commit();
