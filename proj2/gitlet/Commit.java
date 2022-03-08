@@ -60,6 +60,20 @@ public class Commit extends FileTracker {
         return info;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (this.getClass() != o.getClass())
+            return false;
+        Commit other = (Commit) o;
+        return this.time.equals(other.time)
+                &&
+                this.message.equals(other.message)
+                &&
+                this.trackedFiles.equals(other.trackedFiles);
+    }
+
     public void commit() {
         updateTrackFiles();
 
@@ -137,7 +151,7 @@ public class Commit extends FileTracker {
         this.trackedFiles.putAll(files);
     }
 
-    public String curBranch() {
+    public static String curBranch() {
         String branch = readContentsAsString(Repository.CURRENT);
         return branch;
     }

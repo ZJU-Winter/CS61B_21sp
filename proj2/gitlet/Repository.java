@@ -144,7 +144,6 @@ public class Repository {
     /**
      * Call the log() to print each commit starting from the HEAD commit
      */
-    //TODO: merge!!
     public static void log() {
         Commit commit = Commit.getCurCommit();
         while (commit != null) {
@@ -156,7 +155,6 @@ public class Repository {
     /**
      * Call the globalLog() to print all commits in the history
      */
-    //TODO:merge!!
     public static void globalLog() {
         List<String> commits = plainFilenamesIn(COMMITS);
         if (commits != null) {
@@ -260,6 +258,51 @@ public class Repository {
         writeObject(ADDITION, new FileTracker());
     }
 
+    /**
+     * merge files from the given branch into the current branch.
+     */
+    public static void merge(String branchName) {
+        Commit spiltPoint = getSplitPoint(branchName);
+        Commit curCommit = Commit.getCurCommit();
+        Commit otherCommit = Commit.getCommit(readContentsAsString(join(BRANCH, branchName)));
+        uncheckedFileOverwriteBy(otherCommit);
+
+        Set<String> files = new HashSet<>();
+        files.addAll(spiltPoint.getFileNames());
+        files.addAll(curCommit.getFileNames());
+        files.addAll(otherCommit.getFileNames());
+        for (String file : files) {
+            String contentInSpilt = spiltPoint.getFileContentSha1(file);
+            String contentInCur = curCommit.getFileContentSha1(file);
+            String contentInOther = otherCommit.getFileContentSha1(file);
+
+            if (contentInSpilt.equals(contentInCur) && !contentInSpilt.equals(contentInOther)) {
+                File newFile = join(CWD, file);
+                if (contentInOther.equals("")) {
+                    // remove it add to the removal
+                    restrictedDelete(file);
+                    FileTracker removal = readObject(REMOVAL, FileTracker.class);
+                    removal.put(newFile);
+                    writeObject(REMOVAL, removal);
+                } else {
+                    // change the CWD and add to the addition
+                    String content = readBlob(contentInOther);
+                    writeContents(newFile, content);
+                    FileTracker addition = readObject(ADDITION, FileTracker.class);
+                    addition.put(newFile);
+                    writeObject(ADDITION, addition);
+                }
+            } else if (!contentInSpilt.equals(contentInCur)
+                    &&
+                    !contentInSpilt.equals(contentInOther)
+                    &&
+                    !contentInCur.equals(contentInOther)) {
+                dealWithConflict(curCommit, otherCommit, file);
+            }
+        }
+        commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
+    }
+
 
     private static void checkoutCurCommit(String fileName) {
         String commitID = readContentsAsString(HEAD);
@@ -305,7 +348,7 @@ public class Repository {
         }
 
         File file = join(CWD, filename);
-        byte[] contents = readBlob(files.get(filename));
+        String contents = readBlob(files.get(filename));
         createNewFile(file);
         writeContents(file, contents);
     }
@@ -320,7 +363,7 @@ public class Repository {
             createNewFile(file);
         }
     }
-    
+
     /**
      * to set up all needed files and directories for gitlet
      */
@@ -392,12 +435,11 @@ public class Repository {
     private static Set<String> getUntrackedFiles() {
         //untracked files
         List<String> files = plainFilenamesIn(CWD);
-        Set<String> trackedOnBranch = trackedOnBranch(readContentsAsString(CURRENT));
+        Set<String> trackedFiles = Commit.getCurCommit().getTrackedFiles().keySet();
 
         Set<String> untrackedFiles = new LinkedHashSet<>();
         for (String file : files) {
-            File temp = join(CWD, file);
-            if (!trackedOnBranch.contains(fileSha1(temp))) {
+            if (!trackedFiles.contains(file)) {
                 untrackedFiles.add(file);
             }
         }
@@ -496,7 +538,7 @@ public class Repository {
         }
 
         for (String filename : trackedFiles.keySet()) {
-            byte[] contents = readBlob(trackedFiles.get(filename));
+            String contents = readBlob(trackedFiles.get(filename));
             File newFile = join(CWD, filename);
             createNewFile(newFile);
             writeContents(newFile, contents);
@@ -530,37 +572,86 @@ public class Repository {
         writeContents(blob, content);
     }
 
-    private static byte[] readBlob(String sha1) {
+    private static String readBlob(String sha1) {
         File blob = join(Repository.BLOBS, sha1.substring(0, 2), sha1.substring(2));
         if (!blob.exists()) {
-            System.out.print("No such BLOB file with that ID.");
+            return "";
+        }
+        return readContentsAsString(blob);
+    }
+
+    /**
+     * find the spiltPoint between the cur branch and the given branch.
+     */
+    private static Commit getSplitPoint(String branchName) {
+        FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
+        Map<String, String> stage = fileTracker.getTrackedFiles();
+        if (stage.size() != 0) {
+            System.out.print("You have uncommitted changes.");
             System.exit(0);
         }
-        return readContents(blob);
-    }
 
-    private static Set<String> trackedOnBranch(String branchName) {
-        Set<String> trackedOnBranch = new LinkedHashSet<>();
-        File branchFile = join(BRANCH, branchName);
-        Commit commit = Commit.getCommit(readContentsAsString(branchFile));
-        while (commit != null) {
-            trackedOnBranch.addAll(commit.getFileSha1s());
-            commit = Commit.getCommit(commit.getParent());
+        fileTracker = readObject(REMOVAL, FileTracker.class);
+        stage = fileTracker.getTrackedFiles();
+        if (stage.size() != 0) {
+            System.out.print("You have uncommitted changes.");
+            System.exit(0);
         }
-        return trackedOnBranch;
-    }
-
-    private static List<String> blobNames() {
-        List<String> blobs = new LinkedList<>();
-        List<String> folders = plainFolderNamesIn(BLOBS);
-        for (String folder : folders) {
-            File temp = join(BLOBS, folder);
-            List<String> blobInFolder = plainFilenamesIn(temp);
-            for (String blob : blobInFolder) {
-                blobs.add(folder + blob);
-            }
+        String curBranchName = readContentsAsString(CURRENT);
+        if (curBranchName.equals(branchName)) {
+            System.out.print("Cannot merge a branch with itself.");
+            System.exit(0);
         }
-        return blobs;
+        File branchFile = join(BRANCH, Commit.curBranch());
+        String branchHeadCommitSha1 = readContentsAsString(branchFile);
+        File branchHeadCommitFile = join(COMMITS, branchHeadCommitSha1);
+        Commit head1 = readObject(branchHeadCommitFile, Commit.class);
+
+        branchFile = join(BRANCH, branchName);
+        if (!branchFile.exists()) {
+            System.out.print("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        branchHeadCommitSha1 = readContentsAsString(branchFile);
+        branchHeadCommitFile = join(COMMITS, branchHeadCommitSha1);
+        Commit head2 = readObject(branchHeadCommitFile, Commit.class);
+
+        Commit ptr1 = head1, ptr2 = head2;
+        while (!ptr1.equals(ptr2)) {
+            ptr1 = Commit.getCommit(ptr1.getParent());
+            ptr2 = Commit.getCommit(ptr2.getParent());
+            if (ptr1 == null)
+                ptr1 = head2;
+            if (ptr2 == null)
+                ptr2 = head1;
+        }
+        if (ptr1.equals(head2)) {
+            System.out.print("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        }
+        if (ptr1.equals(head1)) {
+            checkoutBranch(branchName);
+            System.out.print("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+        return ptr1;
     }
 
+    private static void dealWithConflict(Commit cur, Commit other, String filename) {
+        System.out.print("Encountered a merge conflict.");
+        String curFileContentSha1 = cur.getFileContentSha1(filename);
+        String otherFileContentSha1 = other.getFileContentSha1(filename);
+
+        String contentInOther = readBlob(otherFileContentSha1);
+        String contentInCur = readBlob(curFileContentSha1);
+        File newVersion = join(CWD, filename);
+
+        writeContents(newVersion, "<<<<<<< HEAD\n" + contentInCur
+                +
+                "=======\n" + contentInOther + "\n>>>>>>>");
+
+        FileTracker addition = readObject(ADDITION, FileTracker.class);
+        addition.put(newVersion);
+        writeObject(ADDITION, addition);
+    }
 }
