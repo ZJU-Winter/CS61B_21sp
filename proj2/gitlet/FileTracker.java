@@ -20,9 +20,6 @@ public class FileTracker implements Serializable {
         this.trackedFiles = new HashMap<>();
     }
 
-    public Map<String, String> getTrackedFiles() {
-        return trackedFiles;
-    }
 
     /**
      * add file for "add"
@@ -32,7 +29,7 @@ public class FileTracker implements Serializable {
         String version = fileSha1(file);
 
         Commit cur = Commit.getCurCommit();
-        Map<String, String> curTrackedFiles = cur.getTrackedFiles();
+        Map<String, String> curTrackedFiles = cur.trackedFiles;
 
         String curVersion = curTrackedFiles.getOrDefault(fileName, "");
 
