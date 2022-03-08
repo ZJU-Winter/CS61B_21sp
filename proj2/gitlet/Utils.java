@@ -164,24 +164,22 @@ class Utils {
     /**
      * Filter out all but plain files.
      */
-    private static final FilenameFilter PLAIN_FILES =
-            new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return new File(dir, name).isFile();
-                }
-            };
+    private static final FilenameFilter PLAIN_FILES = new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return new File(dir, name).isFile();
+        }
+    };
 
     /**
      * Filter out all folders.
      */
-    private static final FilenameFilter PLAIN_FOLDERS =
-            new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return new File(dir, name).isDirectory();
-                }
-            };
+    private static final FilenameFilter PLAIN_FOLDERS = new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return new File(dir, name).isDirectory();
+        }
+    };
 
 
     /**

@@ -2,12 +2,15 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static gitlet.Utils.*;
 
 public class FileTracker implements Serializable {
-    public Map<String, String> trackedFiles;
+    protected Map<String, String> trackedFiles;
 
     public FileTracker(Map<String, String> trackedFiles) {
         this.trackedFiles = trackedFiles;
@@ -17,9 +20,6 @@ public class FileTracker implements Serializable {
         this.trackedFiles = new HashMap<>();
     }
 
-    public Map<String, String> getTrackedFiles() {
-        return trackedFiles;
-    }
 
     /**
      * add file for "add"
@@ -29,11 +29,12 @@ public class FileTracker implements Serializable {
         String version = fileSha1(file);
 
         Commit cur = Commit.getCurCommit();
-        Map<String, String> curTrackedFiles = cur.getTrackedFiles();
+        Map<String, String> curTrackedFiles = cur.trackedFiles;
 
         String curVersion = curTrackedFiles.getOrDefault(fileName, "");
 
-        //If the current working version of the file is identical to the version in the current commit
+        //If the current working version of the file is identical
+        // to the version in the current commit
         if (curVersion.equals(version)) {
             this.trackedFiles.remove(fileName);
         } else {

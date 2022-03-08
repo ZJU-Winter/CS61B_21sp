@@ -1,7 +1,12 @@
 package gitlet;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.LinkedList;
 
 import static gitlet.Utils.*;
 
@@ -79,7 +84,8 @@ public class Repository {
      * 1. read the previous FileTracker object
      * 2. update the object
      * 2.1 if the content is different, update the content
-     * 2.2 If the current working version of the file is identical to the version in the current commit,
+     * 2.2 If the current working version of the file is
+     * identical to the version in the current commit,
      * delete it from the staging area.
      * 3. write back to ADDITION
      */
@@ -341,7 +347,7 @@ public class Repository {
 
     private static void checkoutCommit(String commitID, String filename) {
         Commit commit = Commit.getCommit(commitID);
-        Map<String, String> files = commit.getTrackedFiles();
+        Map<String, String> files = commit.trackedFiles;
         if (!files.containsKey(filename)) {
             System.out.print("File does not exist in that commit.");
             System.exit(0);
@@ -369,7 +375,9 @@ public class Repository {
      */
     private static void setupPersistence() {
         if (inGit()) {
-            System.out.print("A Gitlet version-control system already exists in the current directory.");
+            System.out.print("A Gitlet version-control system already "
+                    +
+                    "exists in the current directory.");
             System.exit(0);
         }
         setupFile(GITLET_DIR, true);
@@ -385,8 +393,9 @@ public class Repository {
     }
 
     public static boolean inGit() {
-        if (GITLET_DIR.exists())
+        if (GITLET_DIR.exists()) {
             return true;
+        }
         return false;
     }
 
@@ -435,7 +444,7 @@ public class Repository {
     private static Set<String> getUntrackedFiles() {
         //untracked files
         List<String> files = plainFilenamesIn(CWD);
-        Set<String> trackedFiles = Commit.getCurCommit().getTrackedFiles().keySet();
+        Set<String> trackedFiles = Commit.getCurCommit().trackedFiles.keySet();
 
         Set<String> untrackedFiles = new LinkedHashSet<>();
         for (String file : files) {
@@ -460,7 +469,9 @@ public class Repository {
         Set<String> uncheckedFiles = getUntrackedFiles();
         for (String uncheckedFile : uncheckedFiles) {
             if (commit.getFileNames().contains(uncheckedFile)) {
-                System.out.print("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.out.print("There is an untracked file in the way; "
+                        +
+                        "delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
@@ -475,9 +486,9 @@ public class Repository {
 
     private static void showModified() {
         Commit commit = Commit.getCurCommit();
-        Map<String, String> trackedFiles = commit.getTrackedFiles();
-        FileTracker Addition = readObject(ADDITION, FileTracker.class);
-        Map<String, String> stagedFiles = Addition.getTrackedFiles();
+        Map<String, String> trackedFiles = commit.trackedFiles;
+        FileTracker addition = readObject(ADDITION, FileTracker.class);
+        Map<String, String> stagedFiles = addition.trackedFiles;
         Set<String> modified = new LinkedHashSet<>();
         for (String file : trackedFiles.keySet()) {
             File temp = join(CWD, file);
@@ -494,8 +505,9 @@ public class Repository {
             File temp = join(CWD, file);
             if (temp.exists()) {
                 String content = fileSha1(CWD, file);
-                if (differentContent(stagedFiles, file, content))
+                if (differentContent(stagedFiles, file, content)) {
                     modified.add(file);
+                }
             }
         }
 
@@ -506,20 +518,22 @@ public class Repository {
 
     private static void showDeleted() {
         Commit commit = Commit.getCurCommit();
-        FileTracker Addition = readObject(ADDITION, FileTracker.class);
-        FileTracker Removal = readObject(REMOVAL, FileTracker.class);
+        FileTracker addition = readObject(ADDITION, FileTracker.class);
+        FileTracker removal = readObject(REMOVAL, FileTracker.class);
         List<String> workingDir = plainFilenamesIn(CWD);
         Set<String> trackedFiles = commit.getFileNames();
-        Set<String> stagedFiles = Addition.getFileNames();
-        Set<String> removedFiles = Removal.getFileNames();
+        Set<String> stagedFiles = addition.getFileNames();
+        Set<String> removedFiles = removal.getFileNames();
         Set<String> deleted = new LinkedHashSet<>();
         for (String file : stagedFiles) {
-            if (!workingDir.contains(file))
+            if (!workingDir.contains(file)) {
                 deleted.add(file);
+            }
         }
         for (String file : trackedFiles) {
-            if (!removedFiles.contains(file) && !workingDir.contains(file))
+            if (!removedFiles.contains(file) && !workingDir.contains(file)) {
                 deleted.add(file);
+            }
         }
         for (String file : deleted) {
             System.out.println(file + " (deleted)");
@@ -531,7 +545,7 @@ public class Repository {
      */
     private static void updateAllFileTo(Commit commit) {
         Commit curCommit = Commit.getCurCommit();
-        Map<String, String> trackedFiles = commit.getTrackedFiles();
+        Map<String, String> trackedFiles = commit.trackedFiles;
         for (String filename : curCommit.getFileNames()) {
             File file = join(CWD, filename);
             restrictedDelete(file);
@@ -548,13 +562,13 @@ public class Repository {
     private static void printAddStage() {
         FileTracker tracker = readObject(ADDITION, FileTracker.class);
         System.out.println("------Addition Stage-------");
-        System.out.println(tracker.getTrackedFiles());
+        System.out.println(tracker.trackedFiles);
     }
 
     private static void printRemoveStage() {
         FileTracker tracker = readObject(REMOVAL, FileTracker.class);
         System.out.println("-------Removed Stage--------");
-        System.out.println(tracker.getTrackedFiles());
+        System.out.println(tracker.trackedFiles);
     }
 
     private static boolean differentContent(Map<String, String> map, String file, String content) {
@@ -585,14 +599,14 @@ public class Repository {
      */
     private static Commit getSplitPoint(String branchName) {
         FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
-        Map<String, String> stage = fileTracker.getTrackedFiles();
+        Map<String, String> stage = fileTracker.trackedFiles;
         if (stage.size() != 0) {
             System.out.print("You have uncommitted changes.");
             System.exit(0);
         }
 
         fileTracker = readObject(REMOVAL, FileTracker.class);
-        stage = fileTracker.getTrackedFiles();
+        stage = fileTracker.trackedFiles;
         if (stage.size() != 0) {
             System.out.print("You have uncommitted changes.");
             System.exit(0);
@@ -620,10 +634,12 @@ public class Repository {
         while (!ptr1.equals(ptr2)) {
             ptr1 = Commit.getCommit(ptr1.getParent());
             ptr2 = Commit.getCommit(ptr2.getParent());
-            if (ptr1 == null)
+            if (ptr1 == null) {
                 ptr1 = head2;
-            if (ptr2 == null)
+            }
+            if (ptr2 == null) {
                 ptr2 = head1;
+            }
         }
         if (ptr1.equals(head2)) {
             System.out.print("Given branch is an ancestor of the current branch.");

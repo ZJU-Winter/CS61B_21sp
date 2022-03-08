@@ -55,17 +55,25 @@ public class Commit extends FileTracker {
 
     @Override
     public String toString() {
-        String info = String.format("Message: %s Time: %s Author: %s\nParentSha1: %s \n" +
+        String info = String.format("Message: %s Time: %s Author: %s\nParentSha1: %s \n"
+                +
                 "TrackedFiles: %s", message, time, author, parent, trackedFiles);
         return info;
     }
 
     @Override
+    public int hashCode() {
+        return this.toString().hashCode();
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (this.getClass() != o.getClass())
+        }
+        if (this.getClass() != o.getClass()) {
             return false;
+        }
         Commit other = (Commit) o;
         return this.time.equals(other.time)
                 &&
@@ -117,8 +125,9 @@ public class Commit extends FileTracker {
         if (sha1.length() < 40) {
             List<String> commits = plainFilenamesIn(Repository.COMMITS);
             for (String commitId : commits) {
-                if (commitId.startsWith(sha1))
+                if (commitId.startsWith(sha1)) {
                     sha1 = commitId;
+                }
             }
         }
         File commit = join(Repository.COMMITS, sha1);
@@ -142,7 +151,7 @@ public class Commit extends FileTracker {
         //clear the adding stage
         writeObject(Repository.ADDITION, new FileTracker());
         //update tracked files
-        Map<String, String> files = addStage.getTrackedFiles();
+        Map<String, String> files = addStage.trackedFiles;
 
         if (files.size() == 0) {
             System.out.print("No changes added to the commit.");
