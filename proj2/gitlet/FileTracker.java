@@ -20,6 +20,9 @@ public class FileTracker implements Serializable {
         this.trackedFiles = new HashMap<>();
     }
 
+    public Map<String, String> getTrackedFiles() {
+        return trackedFiles;
+    }
 
     /**
      * add file for "add"
@@ -29,12 +32,12 @@ public class FileTracker implements Serializable {
         String version = fileSha1(file);
 
         Commit cur = Commit.getCurCommit();
-        Map<String, String> curTrackedFiles = cur.trackedFiles;
+        Map<String, String> curTrackedFiles = cur.getTrackedFiles();
 
         String curVersion = curTrackedFiles.getOrDefault(fileName, "");
 
-        //If the current working version of the file is identical
-        // to the version in the current commit
+        //If the current working version of the file is
+        // identical to the version in the current commit
         if (curVersion.equals(version)) {
             this.trackedFiles.remove(fileName);
         } else {
