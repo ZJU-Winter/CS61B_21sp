@@ -213,7 +213,7 @@ public class Repository {
     }
 
     /**
-     * to create a new branch
+     * create a new branch.
      */
     public static void branch(String branchName) {
         File branch = join(BRANCH, branchName);
@@ -227,7 +227,7 @@ public class Repository {
     }
 
     /**
-     * to remove the branch
+     * remove the branch.
      */
     public static void removeBranch(String branchName) {
         List<String> branches = plainFilenamesIn(BRANCH);
@@ -244,6 +244,18 @@ public class Repository {
         branchFile.delete();
     }
 
+    /**
+     * checkout an arbitrary commit
+     */
+    public static void reset(String commitID) {
+        Commit commit = Commit.getCommit(commitID);
+        uncheckedFileOverwriteBy(commit);
+        updateAllFileTo(commit);
+        //move the current branch’s head to that commit node
+        
+
+    }
+
 
     private static void checkoutCurCommit(String fileName) {
         String commitID = readContentsAsString(HEAD);
@@ -251,7 +263,7 @@ public class Repository {
     }
 
     /**
-     * to update all tracked files to the state of Branch head
+     * to update all tracked files to the state of Branch head.
      */
     private static void checkoutBranch(String branchName) {
         List<String> branches = plainFilenamesIn(BRANCH);
@@ -265,32 +277,22 @@ public class Repository {
             System.out.print("No need to checkout the current branch.");
             System.exit(0);
         }
+
         File branchFile = join(BRANCH, branchName);
         String commitID = readContentsAsString(branchFile);
         Commit branchHead = Commit.getCommit(commitID);
-        Map<String, String> branchTrackedFiles = branchHead.getTrackedFiles();
-        Set<String> untrackedFiles = getUntrackedFiles();
-        if (!untrackedFiles.isEmpty()) {
-            for (String file : untrackedFiles) {
-                if (branchTrackedFiles.containsKey(file)) {
-                    System.out.print("There is an untracked file in the way; delete it, or add and commit it first.");
-                    System.exit(0);
-                }
-            }
-        }
 
-        updateCWDTo(branchHead);
+        uncheckedFileOverwriteBy(branchHead);
+        updateAllFileTo(branchHead);
+
+        //clear the stage
         writeObject(ADDITION, new FileTracker());
+        //update head and current branch
         writeContents(HEAD, commitID);
         writeContents(CURRENT, branchName);
     }
 
     private static void checkoutCommit(String commitID, String filename) {
-        List<String> commits = plainFilenamesIn(COMMITS);
-        if (!commits.contains(commitID)) {
-            System.out.print("No commit with that id exists.");
-            System.exit(0);
-        }
         Commit commit = Commit.getCommit(commitID);
         Map<String, String> files = commit.getTrackedFiles();
         if (!files.containsKey(filename)) {
@@ -298,17 +300,20 @@ public class Repository {
             System.exit(0);
         }
 
-        File file = join(CWD, filename);
-        File blob = join(BLOBS, files.get(filename));
+        Set<String> untrackedFiles = getUntrackedFiles();
+        if (untrackedFiles.contains(filename)) {
+            System.out.print("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
+        }
 
-        byte[] contents = readContents(blob);
+        File file = join(CWD, filename);
+        byte[] contents = readBlob(files.get(filename));
         createNewFile(file);
         writeContents(file, contents);
     }
 
-
     /**
-     * to create file or a directory
+     * to create needed files for gitlet.
      */
     private static void setupFile(File file, boolean isDir) {
         if (isDir) {
@@ -360,7 +365,7 @@ public class Repository {
 
     private static void showStagedFiles() {
         FileTracker staged = readObject(ADDITION, FileTracker.class);
-        Set<String> files = staged.getFiles();
+        Set<String> files = staged.getFileNames();
         System.out.println("=== Staged Files ===");
         for (String file : files) {
             System.out.println(file);
@@ -370,7 +375,7 @@ public class Repository {
 
     private static void showRemovedFiles() {
         FileTracker staged = readObject(REMOVAL, FileTracker.class);
-        Set<String> files = staged.getFiles();
+        Set<String> files = staged.getFileNames();
         System.out.println("=== Removed Files ===");
         for (String file : files) {
             System.out.println(file);
@@ -388,18 +393,38 @@ public class Repository {
     }
 
     private static Set<String> getUntrackedFiles() {
-        Commit commit = Commit.getCurCommit();
-        Set<String> trackedFiles = commit.getFiles();
-        FileTracker staged = readObject(ADDITION, FileTracker.class);
-        Set<String> stagedFiles = staged.getFiles();
+        //untracked files
         List<String> files = plainFilenamesIn(CWD);
+        Set<String> trackedOnBranch = trackedOnBranch(readContentsAsString(CURRENT));
+
         Set<String> untrackedFiles = new LinkedHashSet<>();
         for (String file : files) {
-            if (!trackedFiles.contains(file) && !stagedFiles.contains(file)) {
+            File temp = join(CWD, file);
+            if (!trackedOnBranch.contains(fileSha1(temp))) {
                 untrackedFiles.add(file);
             }
         }
+        //removed and re-created
+        List<String> removedFiles = plainFilenamesIn(REMOVAL);
+        if (removedFiles != null) {
+            for (String removed : removedFiles) {
+                File temp = join(CWD, removed);
+                if (temp.exists()) {
+                    untrackedFiles.add(removed);
+                }
+            }
+        }
         return untrackedFiles;
+    }
+
+    private static void uncheckedFileOverwriteBy(Commit commit) {
+        Set<String> uncheckedFiles = getUntrackedFiles();
+        for (String uncheckedFile : uncheckedFiles) {
+            if (commit.getFileNames().contains(uncheckedFile)) {
+                System.out.print("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+        }
     }
 
     private static void showModifications() {
@@ -438,7 +463,6 @@ public class Repository {
         for (String file : modified) {
             System.out.println(file + " (modified)");
         }
-
     }
 
     private static void showDeleted() {
@@ -446,9 +470,9 @@ public class Repository {
         FileTracker Addition = readObject(ADDITION, FileTracker.class);
         FileTracker Removal = readObject(REMOVAL, FileTracker.class);
         List<String> workingDir = plainFilenamesIn(CWD);
-        Set<String> trackedFiles = commit.getFiles();
-        Set<String> stagedFiles = Addition.getFiles();
-        Set<String> removedFiles = Removal.getFiles();
+        Set<String> trackedFiles = commit.getFileNames();
+        Set<String> stagedFiles = Addition.getFileNames();
+        Set<String> removedFiles = Removal.getFileNames();
         Set<String> deleted = new LinkedHashSet<>();
         for (String file : stagedFiles) {
             if (!workingDir.contains(file))
@@ -464,22 +488,20 @@ public class Repository {
     }
 
     /**
-     * update all files in the CWD to the commit tracked files
-     * 1. not include the untracked files
+     * update files tracked in the current commit to the state of new commit.
      */
-    private static void updateCWDTo(Commit commit) {
+    private static void updateAllFileTo(Commit commit) {
         Commit curCommit = Commit.getCurCommit();
         Map<String, String> trackedFiles = commit.getTrackedFiles();
-        for (String filename : curCommit.getFiles()) {
+        for (String filename : curCommit.getFileNames()) {
             File file = join(CWD, filename);
             restrictedDelete(file);
         }
 
         for (String filename : trackedFiles.keySet()) {
-            File blob = join(BLOBS, trackedFiles.get(filename));
+            byte[] contents = readBlob(trackedFiles.get(filename));
             File newFile = join(CWD, filename);
             createNewFile(newFile);
-            String contents = readContentsAsString(blob);
             writeContents(newFile, contents);
         }
     }
@@ -500,4 +522,48 @@ public class Repository {
         String expected = map.getOrDefault(file, "");
         return !expected.equals(content);
     }
+
+    private static void writeBlob(File file) {
+        String sha1 = fileSha1(file);
+        File folder = join(Repository.BLOBS, sha1.substring(0, 2));
+        File blob = join(folder, sha1.substring(2));
+        folder.mkdir();
+        createNewFile(blob);
+        byte[] content = readContents(file);
+        writeContents(blob, content);
+    }
+
+    private static byte[] readBlob(String sha1) {
+        File blob = join(Repository.BLOBS, sha1.substring(0, 2), sha1.substring(2));
+        if (!blob.exists()) {
+            System.out.print("No such BLOB file with that ID.");
+            System.exit(0);
+        }
+        return readContents(blob);
+    }
+
+    private static Set<String> trackedOnBranch(String branchName) {
+        Set<String> trackedOnBranch = new LinkedHashSet<>();
+        File branchFile = join(BRANCH, branchName);
+        Commit commit = Commit.getCommit(readContentsAsString(branchFile));
+        while (commit != null) {
+            trackedOnBranch.addAll(commit.getFileSha1s());
+            commit = Commit.getCommit(commit.getParent());
+        }
+        return trackedOnBranch;
+    }
+
+    private static List<String> blobNames() {
+        List<String> blobs = new LinkedList<>();
+        List<String> folders = plainFolderNamesIn(BLOBS);
+        for (String folder : folders) {
+            File temp = join(BLOBS, folder);
+            List<String> blobInFolder = plainFilenamesIn(temp);
+            for (String blob : blobInFolder) {
+                blobs.add(folder + blob);
+            }
+        }
+        return blobs;
+    }
+
 }

@@ -56,8 +56,13 @@ public class FileTracker implements Serializable {
                 sha1.equals(this.trackedFiles.get(file.getName()));
     }
 
-    public Set<String> getFiles() {
+    public Set<String> getFileNames() {
         Set<String> files = new LinkedHashSet<>(this.trackedFiles.keySet());
         return files;
+    }
+
+    public Set<String> getFileSha1s() {
+        Set<String> sha1s = new LinkedHashSet<>(this.trackedFiles.values());
+        return sha1s;
     }
 }

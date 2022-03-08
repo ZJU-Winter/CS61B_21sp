@@ -142,35 +142,53 @@ class Utils {
                                                  Class<T> expectedClass) {
         try {
             ObjectInputStream in =
-                new ObjectInputStream(new FileInputStream(file));
+                    new ObjectInputStream(new FileInputStream(file));
             T result = expectedClass.cast(in.readObject());
             in.close();
             return result;
         } catch (IOException | ClassCastException
-                 | ClassNotFoundException excp) {
+                | ClassNotFoundException excp) {
             throw new IllegalArgumentException(excp.getMessage());
         }
     }
 
-    /** Write OBJ to FILE. */
+    /**
+     * Write OBJ to FILE.
+     */
     static void writeObject(File file, Serializable obj) {
         writeContents(file, serialize(obj));
     }
 
     /* DIRECTORIES */
 
-    /** Filter out all but plain files. */
+    /**
+     * Filter out all but plain files.
+     */
     private static final FilenameFilter PLAIN_FILES =
-        new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return new File(dir, name).isFile();
-            }
-        };
+            new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return new File(dir, name).isFile();
+                }
+            };
 
-    /** Returns a list of the names of all plain files in the directory DIR, in
-     *  lexicographic order as Java Strings.  Returns null if DIR does
-     *  not denote a directory. */
+    /**
+     * Filter out all folders.
+     */
+    private static final FilenameFilter PLAIN_FOLDERS =
+            new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return new File(dir, name).isDirectory();
+                }
+            };
+
+
+    /**
+     * Returns a list of the names of all plain files in the directory DIR, in
+     * lexicographic order as Java Strings.  Returns null if DIR does
+     * not denote a directory.
+     */
     static List<String> plainFilenamesIn(File dir) {
         String[] files = dir.list(PLAIN_FILES);
         if (files == null) {
@@ -181,25 +199,46 @@ class Utils {
         }
     }
 
-    /** Returns a list of the names of all plain files in the directory DIR, in
-     *  lexicographic order as Java Strings.  Returns null if DIR does
-     *  not denote a directory. */
+    /**
+     * Returns a list of the names of all plain folders in the directory DIR, in
+     * lexicographic order as Java Strings.  Returns null if DIR does
+     * not denote a directory.
+     */
+    static List<String> plainFolderNamesIn(File dir) {
+        String[] files = dir.list(PLAIN_FOLDERS);
+        if (files == null) {
+            return null;
+        } else {
+            Arrays.sort(files);
+            return Arrays.asList(files);
+        }
+    }
+
+    /**
+     * Returns a list of the names of all plain files in the directory DIR, in
+     * lexicographic order as Java Strings.  Returns null if DIR does
+     * not denote a directory.
+     */
     static List<String> plainFilenamesIn(String dir) {
         return plainFilenamesIn(new File(dir));
     }
 
     /* OTHER FILE UTILITIES */
 
-    /** Return the concatentation of FIRST and OTHERS into a File designator,
-     *  analogous to the {@link java.nio.file.Paths.#get(String, String[])}
-     *  method. */
+    /**
+     * Return the concatentation of FIRST and OTHERS into a File designator,
+     * analogous to the {@link java.nio.file.Paths.#get(String, String[])}
+     * method.
+     */
     static File join(String first, String... others) {
         return Paths.get(first, others).toFile();
     }
 
-    /** Return the concatentation of FIRST and OTHERS into a File designator,
-     *  analogous to the {@link java.nio.file.Paths.#get(String, String[])}
-     *  method. */
+    /**
+     * Return the concatentation of FIRST and OTHERS into a File designator,
+     * analogous to the {@link java.nio.file.Paths.#get(String, String[])}
+     * method.
+     */
     static File join(File first, String... others) {
         return Paths.get(first.getPath(), others).toFile();
     }
@@ -207,7 +246,9 @@ class Utils {
 
     /* SERIALIZATION UTILITIES */
 
-    /** Returns a byte array containing the serialized contents of OBJ. */
+    /**
+     * Returns a byte array containing the serialized contents of OBJ.
+     */
     static byte[] serialize(Serializable obj) {
         try {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -258,11 +299,5 @@ class Utils {
         File file = join(folder, filename);
         return fileSha1(file);
     }
-
-    static void writeBlob(File file) {
-        File blob = join(Repository.BLOBS, fileSha1(file));
-        createNewFile(blob);
-        byte[] content = readContents(file);
-        writeContents(blob, content);
-    }
+    
 }

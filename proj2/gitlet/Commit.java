@@ -3,9 +3,9 @@ package gitlet;
 import static gitlet.Utils.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public class Commit extends FileTracker {
@@ -62,17 +62,13 @@ public class Commit extends FileTracker {
 
     public void commit() {
         updateTrackFiles();
-        String sha1 = getSha1();
-        File commitFile = join(Repository.COMMITS, sha1);
-        try {
-            commitFile.createNewFile();
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
+
+        File commitFile = join(Repository.COMMITS, getSha1());
+        createNewFile(commitFile);
+
         writeObject(commitFile, this);
         setupHead();
-        setupBranch(getBranch());
-
+        setupBranch(curBranch());
 
         System.out.println("-------------");
         System.out.print(this);
@@ -81,8 +77,7 @@ public class Commit extends FileTracker {
     }
 
     public void initCommit() {
-        String sha1 = getSha1();
-        File commit = join(Repository.COMMITS, sha1);
+        File commit = join(Repository.COMMITS, getSha1());
         createNewFile(commit);
         writeObject(commit, this);
         setupHead();
@@ -111,9 +106,16 @@ public class Commit extends FileTracker {
         if (sha1 == null) {
             return null;
         }
+        if (sha1.length() < 40) {
+            List<String> commits = plainFilenamesIn(Repository.COMMITS);
+            for (String commitId : commits) {
+                if (commitId.startsWith(sha1))
+                    sha1 = commitId;
+            }
+        }
         File commit = join(Repository.COMMITS, sha1);
         if (!commit.exists()) {
-            System.out.print("Commit file does not exist.");
+            System.out.print("No commit with that id exists.");
             System.exit(0);
         }
         return readObject(commit, Commit.class);
@@ -141,7 +143,7 @@ public class Commit extends FileTracker {
         this.trackedFiles.putAll(files);
     }
 
-    public String getBranch() {
+    public String curBranch() {
         String branch = readContentsAsString(Repository.CURRENT);
         return branch;
     }

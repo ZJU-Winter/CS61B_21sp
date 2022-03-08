@@ -55,6 +55,10 @@ public class Main {
                 checkArguments(args, 2);
                 Repository.removeBranch(args[1]);
                 break;
+            case "reset":
+                checkArguments(args, 2);
+                Repository.reset(args[1]);
+                break;
             default:
                 System.out.print("No command with that name exists.");
         }
