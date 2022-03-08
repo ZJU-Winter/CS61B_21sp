@@ -95,7 +95,7 @@ public class Repository {
 
         writeBlob(file);
 
-        printAddStage();
+        //printAddStage();
     }
 
     /**
@@ -137,8 +137,8 @@ public class Repository {
             System.exit(0);
         }
 
-        printAddStage();
-        printRemoveStage();
+        //printAddStage();
+        //printRemoveStage();
     }
 
     /**
@@ -252,8 +252,12 @@ public class Repository {
         uncheckedFileOverwriteBy(commit);
         updateAllFileTo(commit);
         //move the current branch’s head to that commit node
-        
-
+        String curBranch = readContentsAsString(CURRENT);
+        File branch = join(BRANCH, curBranch);
+        writeContents(branch, commitID);
+        //move head and clear stage
+        writeContents(HEAD, commitID);
+        writeObject(ADDITION, new FileTracker());
     }
 
 
@@ -300,12 +304,6 @@ public class Repository {
             System.exit(0);
         }
 
-        Set<String> untrackedFiles = getUntrackedFiles();
-        if (untrackedFiles.contains(filename)) {
-            System.out.print("There is an untracked file in the way; delete it, or add and commit it first.");
-            System.exit(0);
-        }
-
         File file = join(CWD, filename);
         byte[] contents = readBlob(files.get(filename));
         createNewFile(file);
@@ -322,8 +320,7 @@ public class Repository {
             createNewFile(file);
         }
     }
-
-
+    
     /**
      * to set up all needed files and directories for gitlet
      */

@@ -18,7 +18,7 @@ public class Commit extends FileTracker {
     Commit(String message, String parent, Map<String, String> trackedFiles) {
         super(trackedFiles);
         this.message = message;
-        this.time = new SimpleDateFormat("yyyy/MMM/dd HH:mm:ss").format(new Date());
+        this.time = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy Z").format(new Date());
         this.parent = parent;
         this.trackedFiles = trackedFiles;
     }
@@ -26,14 +26,14 @@ public class Commit extends FileTracker {
     Commit(String message) {
         super();
         this.message = message;
-        this.time = new SimpleDateFormat("yyyy/MMM/dd HH:mm:ss").format(new Date());
+        this.time = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy Z").format(new Date());
         parent = null;
     }
 
     Commit(Commit commit, String message) {
         super(commit.trackedFiles);
         this.message = message;
-        this.time = new SimpleDateFormat("yyyy/MMM/dd HH:mm:ss").format(new Date());
+        this.time = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy Z").format(new Date());
         this.parent = commit.getSha1();
     }
 
@@ -70,24 +70,18 @@ public class Commit extends FileTracker {
         setupHead();
         setupBranch(curBranch());
 
-        System.out.println("-------------");
-        System.out.print(this);
-        System.out.print("\nMySha1: " + getSha1());
-
+        //debugCommit();
     }
 
     public void initCommit() {
         File commit = join(Repository.COMMITS, getSha1());
         createNewFile(commit);
+
         writeObject(commit, this);
         setupHead();
         setupBranch("master");
 
-
-        System.out.println("-------------");
-        System.out.print(this);
-        System.out.print("\nMySha1: " + getSha1());
-
+        //debugCommit();
     }
 
 
@@ -153,6 +147,13 @@ public class Commit extends FileTracker {
         System.out.println("commit " + this.getSha1());
         System.out.println("Date: " + this.getTime());
         System.out.println(this.getMessage());
+        System.out.println();
+    }
+
+    private void debugCommit() {
+        System.out.println("-------------");
+        System.out.print(this);
+        System.out.print("\nMySha1: " + getSha1());
     }
 
 }
