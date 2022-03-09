@@ -1,0 +1,106 @@
+package gitlet;
+
+import java.io.File;
+import java.util.stream.StreamSupport;
+
+import static gitlet.Utils.*;
+
+
+/**
+ * Represents a gitlet repository.
+ * includes all the methods used in gitlet
+ *
+ * @author winter
+ */
+public class Repository {
+    /**
+     * The current working directory
+     */
+    public static final File CWD = new File(System.getProperty("user.dir"));
+    /**
+     * The .gitlet directory: CWD/.gitlet
+     */
+    public static final File GITLET_DIR = join(CWD, ".gitlet");
+
+    /**
+     * The file that records the HEAD sha1 code: CWD/.gitlet/Head.txt
+     */
+    public static final File HEAD = join(GITLET_DIR, "HEAD");
+
+    /**
+     * The directory for staged files: CWD/.gitlet/stage
+     */
+    public static final File STAGE = join(GITLET_DIR, "stage");
+
+    /**
+     * The directory for all the commits: CWD/.gitlet/commits
+     */
+    public static final File COMMITS = join(GITLET_DIR, "commits");
+
+    /**
+     * The directory for all recorded files: CWD/.gitlet/objects
+     */
+    public static final File OBJECTS = join(GITLET_DIR, "objects");
+
+
+    /**
+     * Call the init() to create all needed files and directories
+     */
+    public static void init() {
+        setupPersistence();
+    }
+
+    public static void add(String[] args) {
+        String[] files = new String[args.length - 1];
+        System.arraycopy(args, 1, files, 0, files.length);
+        for (String file : files) {
+            addToStage(file);
+        }
+    }
+
+    /**
+     * Call the addToStage(String fileName) add a file to the STAGE directory
+     * addToStage(test.txt)
+     */
+    private static void addToStage(String fileName) {
+        //find the file with fileName
+        //create a file named sha1code of the file, the content is the serialized file
+        //put the file into the STAGE directory
+        File file = join(CWD, fileName);
+        String sha1Code = getSha1Code(file);
+        File fileInStage = join(STAGE, sha1Code);
+        Utils.writeObject(fileInStage, file);
+    }
+
+    /**
+     * to create file or a directory
+     */
+    private static void createFile(File file, boolean isDir) {
+        if (isDir) {
+            file.mkdir();
+        } else if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (Exception exception) {
+                throw new GitletException("Failed to creat " + file.getName());
+            }
+        }
+    }
+
+    /**
+     * to set up all needed files and directories for gitlet
+     */
+    private static void setupPersistence() {
+        createFile(GITLET_DIR, true);
+        createFile(STAGE, true);
+        createFile(COMMITS, true);
+        createFile(OBJECTS, true);
+        createFile(HEAD, false);
+    }
+
+    private static String getSha1Code(File file) {
+        String content = readContentsAsString(file);
+        return Utils.sha1(content);
+    }
+}
+
