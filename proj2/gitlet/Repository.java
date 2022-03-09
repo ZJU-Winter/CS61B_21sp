@@ -674,7 +674,7 @@ public class Repository {
 
         writeContents(newVersion, "<<<<<<< HEAD\n" + contentInCur
                 +
-                "\n=======\n" + contentInOther + "\n>>>>>>>");
+                "=======\n" + contentInOther + ">>>>>>>");
 
         FileTracker addition = readObject(ADDITION, FileTracker.class);
         addition.put(newVersion);
