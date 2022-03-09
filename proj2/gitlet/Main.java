@@ -1,7 +1,5 @@
 package gitlet;
 
-import java.util.regex.MatchResult;
-
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
