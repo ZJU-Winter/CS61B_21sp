@@ -52,7 +52,7 @@ public class Main {
                 break;
             case "branch":
                 checkArguments(args, 2);
-                Repository.branch(args[1]);
+                //Repository.branch(args[1]);
                 break;
             case "rm-branch":
                 checkArguments(args, 2);
