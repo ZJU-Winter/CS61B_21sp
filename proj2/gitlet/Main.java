@@ -69,6 +69,9 @@ public class Main {
         }
     }
 
+    /**
+     * check the number of arguments
+     */
     private static void checkArguments(String[] args, int required) {
         if (args.length != required) {
             if (args[0].equals("commit") && (args.length == 1)) {
@@ -85,6 +88,9 @@ public class Main {
         }
     }
 
+    /**
+     * check arguments for the "checkout" command
+     */
     private static void checkoutArguments(String[] args) {
         int length = args.length;
         switch (length) {

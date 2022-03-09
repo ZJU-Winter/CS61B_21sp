@@ -67,7 +67,7 @@ public class Repository {
 
 
     /**
-     * Call the init()
+     * gitlet init
      * 1. create all needed files and directories
      * 2. create an initial branch master
      * 3. commit an empty commit
@@ -79,7 +79,7 @@ public class Repository {
     }
 
     /**
-     * Call the addToStage(String fileName) add a file to the STAGE directory
+     * gitlet add [filename]
      * 1. read the previous FileTracker object
      * 2. update the object
      * 2.1 if the content is different, update the content
@@ -109,7 +109,7 @@ public class Repository {
     }
 
     /**
-     * Call the commit("message") to commit
+     * gitlet commit [message]
      * 1. copy from the parent commit
      * 2. put adding stage to tracked files and clear the stage
      * 3. save the new commit to the directory
@@ -126,7 +126,7 @@ public class Repository {
     }
 
     /**
-     * Call the rm(filename) to rm
+     * gitlet rm [filename]
      * 1.if the file is staged, unstage it
      * 2.if the file is tracked in the current commit
      * 2.1 stage it for removal
@@ -155,7 +155,8 @@ public class Repository {
     }
 
     /**
-     * Call the log() to print each commit starting from the HEAD commit
+     * gitlet log
+     * show commits start from the head commit
      */
     public static void log() {
         Commit commit = Commit.getCurCommit();
@@ -166,7 +167,8 @@ public class Repository {
     }
 
     /**
-     * Call the globalLog() to print all commits in the history
+     * gitlet global-log
+     * show all the commit regardless of order
      */
     public static void globalLog() {
         List<String> commits = plainFilenamesIn(COMMITS);
@@ -179,7 +181,8 @@ public class Repository {
     }
 
     /**
-     * Call the find to print out all the ids of commits that have given commit message
+     * gitlet find [message]
+     * show the information of a commit with given message
      */
     public static void find(String message) {
         List<String> commits = plainFilenamesIn(COMMITS);
@@ -200,7 +203,8 @@ public class Repository {
     }
 
     /**
-     * Call the status() to show information
+     * gitlet status
+     * show current file status
      */
     public static void status() {
         showBranches();
@@ -211,7 +215,9 @@ public class Repository {
     }
 
     /**
-     * Call the checkout(args) to checkout
+     * 1. gitlet checkout [branchname]: update tracked files to the stage of the given branch's head
+     * 2. gitlet checkout -- [filename]: update the given file to the stage of head commit
+     * 3. gitlet checkout [commitID] -- [filename]
      */
     public static void checkout(String[] args) {
         if (args.length == 2) {
@@ -224,7 +230,8 @@ public class Repository {
     }
 
     /**
-     * create a new branch.
+     * gitlet branch [branchname]
+     * create a new branch named [branchname] point to the current commit
      */
     public static void branch(String branchName) {
         File branch = join(BRANCH, branchName);
@@ -238,7 +245,8 @@ public class Repository {
     }
 
     /**
-     * remove the branch.
+     * gitlet rm-branch [branchname]
+     * remove the branch named [branchname]
      */
     public static void removeBranch(String branchName) {
         List<String> branches = plainFilenamesIn(BRANCH);
@@ -256,7 +264,9 @@ public class Repository {
     }
 
     /**
+     * gitlet reset [commitID]
      * checkout an arbitrary commit
+     * see gitlet checkout
      */
     public static void reset(String commitID) {
         Commit commit = Commit.getCommit(commitID);
@@ -272,7 +282,7 @@ public class Repository {
     }
 
     /**
-     * merge files from the given branch into the current branch.
+     * gitlet merge [branchname]
      */
     public static void merge(String branchName) {
         Commit spiltPoint = getSplitPoint(branchName);
@@ -323,7 +333,7 @@ public class Repository {
     }
 
     /**
-     * to update all tracked files to the state of Branch head.
+     * update all tracked files to the state of the branch head
      */
     private static void checkoutBranch(String branchName) {
         List<String> branches = plainFilenamesIn(BRANCH);
@@ -352,6 +362,9 @@ public class Repository {
         writeContents(CURRENT, branchName);
     }
 
+    /**
+     * update a file to the state of the given commit
+     */
     private static void checkoutCommit(String commitID, String filename) {
         Commit commit = Commit.getCommit(commitID);
         Map<String, String> files = commit.trackedFiles;
@@ -367,7 +380,7 @@ public class Repository {
     }
 
     /**
-     * to create needed files for gitlet.
+     * create a needed files/directory for gitlet.
      */
     private static void setupFile(File file, boolean isDir) {
         if (isDir) {
@@ -378,7 +391,7 @@ public class Repository {
     }
 
     /**
-     * to set up all needed files and directories for gitlet
+     * create all needed files and directories for gitlet
      */
     private static void setupPersistence() {
         if (inGit()) {
@@ -399,6 +412,9 @@ public class Repository {
         writeObject(REMOVAL, new FileTracker());
     }
 
+    /**
+     * check if already in .gitlet
+     */
     public static boolean inGit() {
         if (GITLET_DIR.exists()) {
             return true;
@@ -406,6 +422,10 @@ public class Repository {
         return false;
     }
 
+    /**
+     * helper function for gitlet status
+     * show branch status
+     */
     private static void showBranches() {
         String current = readContentsAsString(CURRENT);
         List<String> files = plainFilenamesIn(BRANCH);
@@ -419,6 +439,10 @@ public class Repository {
         System.out.println();
     }
 
+    /**
+     * helper function for gitlet status
+     * show addition stage files
+     */
     private static void showStagedFiles() {
         FileTracker staged = readObject(ADDITION, FileTracker.class);
         Set<String> files = staged.getFileNames();
@@ -429,6 +453,10 @@ public class Repository {
         System.out.println();
     }
 
+    /**
+     * helper function for gitlet status
+     * show removal stage files
+     */
     private static void showRemovedFiles() {
         FileTracker staged = readObject(REMOVAL, FileTracker.class);
         Set<String> files = staged.getFileNames();
@@ -439,6 +467,10 @@ public class Repository {
         System.out.println();
     }
 
+    /**
+     * helper function for gitlet status
+     * show untracked files in CWD
+     */
     private static void showUntrackedFiles() {
         Set<String> untrackedFiles = getUntrackedFiles();
         System.out.println("=== Untracked Files ===");
@@ -448,45 +480,11 @@ public class Repository {
         System.out.println();
     }
 
-    private static Set<String> getUntrackedFiles() {
-        //untracked files
-        List<String> files = plainFilenamesIn(CWD);
-        Set<String> trackedInCur = Commit.getCurCommit().trackedFiles.keySet();
-        Set<String> trackedFiles = new HashSet<>(trackedInCur);
-        FileTracker addition = readObject(ADDITION, FileTracker.class);
-        trackedFiles.addAll(addition.trackedFiles.keySet());
 
-        Set<String> untrackedFiles = new LinkedHashSet<>();
-        for (String file : files) {
-            if (!trackedFiles.contains(file)) {
-                untrackedFiles.add(file);
-            }
-        }
-        //removed and re-created
-        List<String> removedFiles = plainFilenamesIn(REMOVAL);
-        if (removedFiles != null) {
-            for (String removed : removedFiles) {
-                File temp = join(CWD, removed);
-                if (temp.exists()) {
-                    untrackedFiles.add(removed);
-                }
-            }
-        }
-        return untrackedFiles;
-    }
-
-    private static void uncheckedFileOverwriteBy(Commit commit) {
-        Set<String> uncheckedFiles = getUntrackedFiles();
-        for (String uncheckedFile : uncheckedFiles) {
-            if (commit.getFileNames().contains(uncheckedFile)) {
-                System.out.print("There is an untracked file in the way; "
-                        +
-                        "delete it, or add and commit it first.");
-                System.exit(0);
-            }
-        }
-    }
-
+    /**
+     * helper function for gitlet status
+     * show modifications
+     */
     private static void showModifications() {
         System.out.println("=== Modifications Not Staged For Commit ===");
         showDeleted();
@@ -494,6 +492,10 @@ public class Repository {
         System.out.println();
     }
 
+    /**
+     * helper function for showing modifications
+     * show modified files in CWD
+     */
     private static void showModified() {
         Commit commit = Commit.getCurCommit();
         Map<String, String> trackedFiles = commit.trackedFiles;
@@ -526,6 +528,10 @@ public class Repository {
         }
     }
 
+    /**
+     * helper function for showing modifications
+     * show deleted files in CWD
+     */
     private static void showDeleted() {
         Commit commit = Commit.getCurCommit();
         FileTracker addition = readObject(ADDITION, FileTracker.class);
@@ -551,7 +557,55 @@ public class Repository {
     }
 
     /**
-     * update files tracked in the current commit to the state of new commit.
+     * get all untracked files
+     * untracked files: files in CWD but not added or committed
+     * include removed files but in CWD
+     */
+    private static Set<String> getUntrackedFiles() {
+        //untracked files
+        List<String> files = plainFilenamesIn(CWD);
+        Set<String> trackedInCur = Commit.getCurCommit().trackedFiles.keySet();
+        Set<String> trackedFiles = new HashSet<>(trackedInCur);
+        FileTracker addition = readObject(ADDITION, FileTracker.class);
+        trackedFiles.addAll(addition.trackedFiles.keySet());
+
+        Set<String> untrackedFiles = new LinkedHashSet<>();
+        for (String file : files) {
+            if (!trackedFiles.contains(file)) {
+                untrackedFiles.add(file);
+            }
+        }
+        //removed and re-created
+        List<String> removedFiles = plainFilenamesIn(REMOVAL);
+        if (removedFiles != null) {
+            for (String removed : removedFiles) {
+                File temp = join(CWD, removed);
+                if (temp.exists()) {
+                    untrackedFiles.add(removed);
+                }
+            }
+        }
+        return untrackedFiles;
+    }
+
+    /**
+     * a helper function to detect if there are untracked files might be overwritten by checkout
+     */
+    private static void uncheckedFileOverwriteBy(Commit commit) {
+        Set<String> uncheckedFiles = getUntrackedFiles();
+        for (String uncheckedFile : uncheckedFiles) {
+            if (commit.getFileNames().contains(uncheckedFile)) {
+                System.out.print("There is an untracked file in the way; "
+                        +
+                        "delete it, or add and commit it first.");
+                System.exit(0);
+            }
+        }
+    }
+
+
+    /**
+     * update files tracked in the current commit to the state of a given commit
      */
     private static void updateAllFileTo(Commit commit) {
         Commit curCommit = Commit.getCurCommit();
@@ -586,6 +640,11 @@ public class Repository {
         return !expected.equals(content);
     }
 
+    /**
+     * helper function to write a blob file in BLOB
+     * filename: sha1code of the content
+     * file content: content of the file
+     */
     private static void writeBlob(File file) {
         String sha1 = fileSha1(file);
         File folder = join(Repository.BLOBS, sha1.substring(0, 2));
@@ -596,6 +655,9 @@ public class Repository {
         writeContents(blob, content);
     }
 
+    /**
+     * helper function to read content of a file
+     */
     private static String readBlob(String sha1) {
         File blob = join(Repository.BLOBS, sha1.substring(0, 2), sha1.substring(2));
         if (!blob.exists()) {
@@ -605,7 +667,7 @@ public class Repository {
     }
 
     /**
-     * find the spiltPoint between the cur branch and the given branch.
+     * find the spiltPoint between the cur branch and the given branch.\
      */
     private static Commit getSplitPoint(String branchName) {
         FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
@@ -663,6 +725,9 @@ public class Repository {
         return ptr1;
     }
 
+    /**
+     * deal with conflict when merging
+     */
     private static void dealWithConflict(Commit cur, Commit other, String filename) {
         System.out.print("Encountered a merge conflict.");
         String curFileContentSha1 = cur.getFileContentSha1(filename);
