@@ -26,12 +26,12 @@ public class Repository {
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
     /**
-     * The file that records the HEAD sha1 code: CWD/.gitlet/Head.txt
+     * The file that records the HEAD sha1 code: CWD/.gitlet/Head
      */
     public static final File HEAD = join(GITLET_DIR, "HEAD");
 
     /**
-     * The directory for staged files: CWD/.gitlet/stage
+     * The directory for staged files: CWD/.gitlet/stagearea
      */
     public static final File STAGINGAREA = join(GITLET_DIR, "stagingarea");
 
@@ -41,27 +41,27 @@ public class Repository {
     public static final File COMMITS = join(GITLET_DIR, "commits");
 
     /**
-     * The directory for all recorded files: CWD/.gitlet/objects
+     * The directory for all recorded files: CWD/.gitlet/blobs
      */
     public static final File BLOBS = join(GITLET_DIR, "blobs");
 
     /**
-     * The directory for all branches: CWS/.gitlet/branches
+     * The directory for all branches: CWD/.gitlet/branches
      */
     public static final File BRANCH = join(GITLET_DIR, "branches");
 
     /**
-     * The file for recording the current branch's name
+     * The file for recording the current branch's name: CWD/CURRENT
      */
     public static final File CURRENT = join(GITLET_DIR, "CURRENT");
 
     /**
-     * The file for recording staged files for addition
+     * The file for recording staged files for addition: CWD/stagearea/addition
      */
     public static final File ADDITION = join(STAGINGAREA, "addition");
 
     /**
-     * The file for recording staged files for removal
+     * The file for recording staged files for removal: CWD/stagearea/removal
      */
     public static final File REMOVAL = join(STAGINGAREA, "removal");
 
