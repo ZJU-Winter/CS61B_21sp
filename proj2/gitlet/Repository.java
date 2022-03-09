@@ -295,7 +295,7 @@ public class Repository {
                     // remove it add to the removal
                     restrictedDelete(file);
                     FileTracker removal = readObject(REMOVAL, FileTracker.class);
-                    removal.put(newFile);
+                    removal.trackedFiles.put(file, contentInCur);
                     writeObject(REMOVAL, removal);
                 } else {
                     // change the CWD and add to the addition
