@@ -135,14 +135,14 @@ public class Repository {
     public static void rm(String filename) {
         File file = join(CWD, filename);
         FileTracker addStage = readObject(ADDITION, FileTracker.class);
-        FileTracker removeStage = readObject(REMOVAL, FileTracker.class);
         Commit commit = Commit.getCurCommit();
 
-        if (addStage.containsFile(file)) {
-            addStage.remove(file);
+        if (addStage.trackedFiles.containsKey(filename)) {
+            addStage.trackedFiles.remove(filename);
             writeObject(ADDITION, addStage);
-        } else if (commit.containsFile(file)) {
-            removeStage.put(file);
+        } else if (commit.trackedFiles.containsKey(filename)) {
+            FileTracker removeStage = readObject(REMOVAL, FileTracker.class);
+            removeStage.trackedFiles.put(filename, commit.getFileContentSha1(filename));
             writeObject(REMOVAL, removeStage);
             restrictedDelete(file);
         } else {

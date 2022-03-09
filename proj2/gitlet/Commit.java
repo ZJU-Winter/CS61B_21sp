@@ -50,7 +50,8 @@ public class Commit extends FileTracker {
     }
 
     public String getSha1() {
-        return sha1(this.toString());
+        return sha1(String.format("Message: %s Time: %s Author: %s\nParentSha1: %s\n",
+                message, time, author, parent));
     }
 
     @Override
@@ -83,15 +84,13 @@ public class Commit extends FileTracker {
     }
 
     public void commit() {
-        updateTrackFiles();
-
         File commitFile = join(Repository.COMMITS, getSha1());
         createNewFile(commitFile);
 
+        updateTrackFiles();
         writeObject(commitFile, this);
         setupHead();
         setupBranch(curBranch());
-
         //debugCommit();
     }
 
@@ -177,12 +176,14 @@ public class Commit extends FileTracker {
         System.out.println("Date: " + this.getTime());
         System.out.println(this.getMessage());
         System.out.println();
+        //System.out.print("debug:\n");
+        //debugCommit();
     }
 
     private void debugCommit() {
         System.out.println("-------------");
         System.out.print(this);
-        System.out.print("\nMySha1: " + getSha1());
+        System.out.print("\nMySha1: " + getSha1() + "\n");
     }
 
 }
