@@ -1,7 +1,10 @@
 package gitlet;
 
+import java.util.regex.MatchResult;
+
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
+ *
  * @author winter
  */
 public class Main {
@@ -44,7 +47,7 @@ public class Main {
                 Repository.status();
                 break;
             case "checkout":
-                argumentsAtLeast(args, 2);
+                checkoutArguments(args);
                 Repository.checkout(args);
                 break;
             case "branch":
@@ -84,10 +87,27 @@ public class Main {
         }
     }
 
-    private static void argumentsAtLeast(String[] args, int required) {
-        if (args.length < required) {
-            System.out.print("Incorrect operands.");
-            System.exit(0);
+    private static void checkoutArguments(String[] args) {
+        int length = args.length;
+        switch (length) {
+            case 2:
+                break;
+            case 3:
+                if (!args[1].equals("--")) {
+                    System.out.print("Incorrect operands.");
+                    System.exit(0);
+                }
+                break;
+            case 4:
+                if (!args[2].equals("--")) {
+                    System.out.print("Incorrect operands.");
+                    System.exit(0);
+                }
+                break;
+            default:
+                System.out.print("Incorrect operands.");
+                System.exit(0);
+                break;
         }
         if (!Repository.inGit()) {
             System.out.print("Not in an initialized Gitlet directory.");
