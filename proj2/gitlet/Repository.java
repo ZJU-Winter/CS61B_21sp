@@ -668,8 +668,8 @@ public class Repository {
         String curFileContentSha1 = cur.getFileContentSha1(filename);
         String otherFileContentSha1 = other.getFileContentSha1(filename);
 
-        String contentInOther = readBlob(otherFileContentSha1);
-        String contentInCur = readBlob(curFileContentSha1);
+        String contentInCur = curFileContentSha1.equals("") ? "" : readBlob(curFileContentSha1);
+        String contentInOther = otherFileContentSha1.equals("") ? "" : readBlob(otherFileContentSha1);
         File newVersion = join(CWD, filename);
 
         writeContents(newVersion, "<<<<<<< HEAD\n" + contentInCur
