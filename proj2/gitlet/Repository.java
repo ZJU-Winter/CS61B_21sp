@@ -217,7 +217,7 @@ public class Repository {
     /**
      * 1. gitlet checkout [branchname]: update tracked files to the stage of the given branch's head
      * 2. gitlet checkout -- [filename]: update the given file to the stage of head commit
-     * 3. gitlet checkout [commitID] -- [filename]
+     * 3. gitlet checkout [commitID] -- [filename]: update the given file to the stage of given commit
      */
     public static void checkout(String[] args) {
         if (args.length == 2) {
@@ -667,7 +667,7 @@ public class Repository {
     }
 
     /**
-     * find the spiltPoint between the cur branch and the given branch.\
+     * find the spiltPoint between the cur branch and the given branch
      */
     private static Commit getSplitPoint(String branchName) {
         FileTracker fileTracker = readObject(ADDITION, FileTracker.class);
