@@ -127,16 +127,16 @@ public class Repository {
 
     /**
      * a commit function for merged commit
+     public static void mergedCommit(String message, Commit secondParent) {
+     if (message.equals("")) {
+     System.out.print("Please enter a commit message.");
+     System.exit(0);
+     }
+     Commit firstParent = Commit.getCurCommit();
+     MergedCommit mergedCommit = new MergedCommit(firstParent, secondParent, message);
+     mergedCommit.commit();
+     }
      */
-    public static void mergedCommit(String message, Commit secondParent) {
-        if (message.equals("")) {
-            System.out.print("Please enter a commit message.");
-            System.exit(0);
-        }
-        Commit firstParent = Commit.getCurCommit();
-        MergedCommit mergedCommit = new MergedCommit(firstParent, secondParent, message);
-        mergedCommit.commit();
-    }
 
     /**
      * gitlet rm [filename]
@@ -228,9 +228,12 @@ public class Repository {
     }
 
     /**
-     * 1. gitlet checkout [branchname]: update tracked files to the stage of the given branch's head
-     * 2. gitlet checkout -- [filename]: update the given file to the stage of head commit
-     * 3. gitlet checkout [commitID] -- [filename]: update the given file to the stage of given commit
+     * 1. gitlet checkout [branchname]
+     * update tracked files to the stage of the given branch's head
+     * 2. gitlet checkout -- [filename]
+     * update the given file to the stage of head commit
+     * 3. gitlet checkout [commitID] -- [filename]
+     * update the given file to the stage of given commit
      */
     public static void checkout(String[] args) {
         if (args.length == 2) {
@@ -336,8 +339,8 @@ public class Repository {
                 dealWithConflict(curCommit, otherCommit, file);
             }
         }
-        mergedCommit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".", otherCommit);
-        //commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
+        //mergedCommit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".", otherCommit);
+        commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
     }
 
 
