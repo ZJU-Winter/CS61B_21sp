@@ -128,15 +128,15 @@ public class Repository {
     /**
      * a commit function for merged commit
      */
-     public static void mergedCommit(String message, Commit secondParent) {
-         if (message.equals("")) {
-             System.out.print("Please enter a commit message.");
-             System.exit(0);
-         }
-         Commit firstParent = Commit.getCurCommit();
-         MergedCommit mergedCommit = new MergedCommit(firstParent, secondParent, message);
-         mergedCommit.commit();
-     }
+    public static void mergedCommit(String message, Commit secondParent) {
+        if (message.equals("")) {
+            System.out.print("Please enter a commit message.");
+            System.exit(0);
+        }
+        Commit firstParent = Commit.getCurCommit();
+        MergedCommit mergedCommit = new MergedCommit(firstParent, secondParent, message);
+        mergedCommit.commit();
+    }
 
 
     /**
