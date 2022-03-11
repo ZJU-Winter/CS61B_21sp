@@ -127,16 +127,17 @@ public class Repository {
 
     /**
      * a commit function for merged commit
-     public static void mergedCommit(String message, Commit secondParent) {
-     if (message.equals("")) {
-     System.out.print("Please enter a commit message.");
-     System.exit(0);
-     }
-     Commit firstParent = Commit.getCurCommit();
-     MergedCommit mergedCommit = new MergedCommit(firstParent, secondParent, message);
-     mergedCommit.commit();
-     }
      */
+     public static void mergedCommit(String message, Commit secondParent) {
+         if (message.equals("")) {
+             System.out.print("Please enter a commit message.");
+             System.exit(0);
+         }
+         Commit firstParent = Commit.getCurCommit();
+         MergedCommit mergedCommit = new MergedCommit(firstParent, secondParent, message);
+         mergedCommit.commit();
+     }
+
 
     /**
      * gitlet rm [filename]
@@ -339,10 +340,10 @@ public class Repository {
                 dealWithConflict(curCommit, otherCommit, file);
             }
         }
-        //mergedCommit("Merged " + branchName + " into "
-        // +
-        // readContentsAsString(CURRENT) + ".", otherCommit);
-        commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
+        mergedCommit("Merged " + branchName + " into "
+                +
+                readContentsAsString(CURRENT) + ".", otherCommit);
+        //commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
     }
 
 
@@ -723,8 +724,16 @@ public class Repository {
 
         Commit ptr1 = head1, ptr2 = head2;
         while (!ptr1.equals(ptr2)) {
-            ptr1 = Commit.getCommit(ptr1.getParent());
-            ptr2 = Commit.getCommit(ptr2.getParent());
+            ptr1 = ptr1.getClass().equals(MergedCommit.class)
+                    ?
+                    Commit.getCommit(((MergedCommit) ptr1).getSecondParent())
+                    :
+                    Commit.getCommit(ptr1.getParent());
+            ptr2 = ptr2.getClass().equals(MergedCommit.class)
+                    ?
+                    Commit.getCommit(((MergedCommit) ptr2).getSecondParent())
+                    :
+                    Commit.getCommit(ptr2.getParent());
             if (ptr1 == null) {
                 ptr1 = head2;
             }

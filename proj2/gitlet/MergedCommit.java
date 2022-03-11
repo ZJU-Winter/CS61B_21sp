@@ -11,8 +11,7 @@ public class MergedCommit extends Commit {
         this.secondParent = secondParent.getSha1();
     }
 
-    @Override
-    public String getParent() {
+    public String getSecondParent() {
         return secondParent;
     }
 
