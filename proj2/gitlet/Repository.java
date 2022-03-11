@@ -126,6 +126,19 @@ public class Repository {
     }
 
     /**
+     * a commit function for merged commit
+     */
+    public static void mergedCommit(String message, Commit secondParent) {
+        if (message.equals("")) {
+            System.out.print("Please enter a commit message.");
+            System.exit(0);
+        }
+        Commit firstParent = Commit.getCurCommit();
+        MergedCommit mergedCommit = new MergedCommit(firstParent, secondParent, message);
+        mergedCommit.commit();
+    }
+
+    /**
      * gitlet rm [filename]
      * 1.if the file is staged, unstage it
      * 2.if the file is tracked in the current commit
@@ -323,7 +336,8 @@ public class Repository {
                 dealWithConflict(curCommit, otherCommit, file);
             }
         }
-        commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
+        mergedCommit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".", otherCommit);
+        //commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
     }
 
 
