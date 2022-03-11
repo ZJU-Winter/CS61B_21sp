@@ -339,7 +339,9 @@ public class Repository {
                 dealWithConflict(curCommit, otherCommit, file);
             }
         }
-        //mergedCommit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".", otherCommit);
+        //mergedCommit("Merged " + branchName + " into "
+        // +
+        // readContentsAsString(CURRENT) + ".", otherCommit);
         commit("Merged " + branchName + " into " + readContentsAsString(CURRENT) + ".");
     }
 
