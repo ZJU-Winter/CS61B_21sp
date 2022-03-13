@@ -2,8 +2,6 @@
 
 **Author**: Winter Huang
 
-**Date**: 2022/03
-
 ## Classes and Data Structures
 
 #### Main Methods
