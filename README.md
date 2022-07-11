@@ -1,3 +1,4 @@
-### CS61B_21sp Learning
-#### A repo for Projects.
-More labs and projects here: [CS61B_18sp](https://github.com/ZJU-Winter/CS61B_Learning)
+## UC Berkeley CS61B 21sp
+A repo for Gitlet.
+
+More homework and projects [here.](https://github.com/ZJU-Winter/CS61B_Learning)
